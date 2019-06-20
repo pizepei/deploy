@@ -139,22 +139,18 @@ class Ssh2
      * @title  获取 Xterm 结果
      * @explain 超时限制单位s默认30s
      */
-    public function fgetsXterm($shell,$astrict=60)
+    public function fgetsXterm($shell,$astrict=70)
     {
         $result = [];
         $time = time();
-        while(preg_match($this->pattern,$fgets = fgets($shell)) === 0) {
-            if(time()-$time>=$astrict)
-            {
-                return ['result'=>$result,'time'=>time()-$time];
-            }
+        while(preg_match($this->pattern,$fgets = fgets($shell)) === 0  || time()-$time >$astrict ) {
             if(!empty($fgets))
             {
                 $result[] = $fgets;
             }
         }
         $result[] = $fgets;
-        return ['result'=>$result,'time'=>time()-$time];
+        return ['result'=>$result,'time'=>['start'=>$time,'over'=>time()-$time],'astrict'=>$astrict];
     }
 
 }
