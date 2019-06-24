@@ -12,7 +12,7 @@ namespace pizepei\deploy\model;
 
 use pizepei\model\db\Model;
 
-class GitlabServeDeployConfigModel extends Model
+class GitlabMicroServiceDeployConfigModel extends Model
 {
 
     /**
@@ -23,23 +23,24 @@ class GitlabServeDeployConfigModel extends Model
         'id'=>[
             'TYPE'=>'uuid','COMMENT'=>'主键uuid','DEFAULT'=>false,
         ],
-        'project_id'=>[
-            'TYPE'=>'uuid','DEFAULT'=>false,'COMMENT'=>'项目配置表id',
-        ],
         'object_kind'=>[
             'TYPE'=>'varchar(150)', 'DEFAULT'=>'', 'COMMENT'=>'支持部署的事件类型',
         ],
-        'project_name'=>[
+        'service_name'=>[
             'TYPE'=>'varchar(250)', 'DEFAULT'=>'', 'COMMENT'=>'项目名字',
         ],
-        'project_describe'=>[
+        'service_description'=>[
             'TYPE'=>'varchar(1000)', 'DEFAULT'=>'', 'COMMENT'=>'项目描述',
+        ],
+        //***************************git信息********************************************
+        'project_id'=>[
+            'TYPE'=>'int(10)','DEFAULT'=>0,'COMMENT'=>'git项目id',
+        ],
+        'ref'=>[
+            'TYPE'=>'varchar(255)', 'DEFAULT'=>'', 'COMMENT'=>'参考信息通常包括分支信息',
         ],
         'trigger_user'=>[
             'TYPE'=>'json', 'DEFAULT'=>false, 'COMMENT'=>'可触发的用户[id=>{信息}]',
-        ],
-        'project_id'=>[
-            'TYPE'=>'int(10)', 'DEFAULT'=>0, 'COMMENT'=>'对象id',
         ],
         'repository_name'=>[
             'TYPE'=>'varchar(255)', 'DEFAULT'=>'', 'COMMENT'=>'仓库名称',
@@ -53,14 +54,17 @@ class GitlabServeDeployConfigModel extends Model
         'ssh_url'=>[
             'TYPE'=>'varchar(255)', 'DEFAULT'=>'', 'COMMENT'=>'仓库地址',
         ],
-        'serve_group'=>[
+        'service_group'=>[
             'TYPE'=>"ENUM('develop','production','developTest','productionTest')", 'DEFAULT'=>'develop', 'COMMENT'=>'环境分组',
+        ],
+        'shell'=>[
+            'TYPE'=>'json', 'DEFAULT'=>false, 'COMMENT'=>'部署时的额外shell',
         ],
         'status'=>[
             'TYPE'=>"ENUM('1','2','3','4','5')", 'DEFAULT'=>'1', 'COMMENT'=>'1停用2、正常3、进行中',
         ],
         'INDEX'=>[
-            ['TYPE'=>'UNIQUE','FIELD'=>'project_name,serve_group','NAME'=>'project_name,serve_group','USING'=>'BTREE','COMMENT'=>'分组与名字'],
+            ['TYPE'=>'UNIQUE','FIELD'=>'service_name,service_group','NAME'=>'service_name,service_group','USING'=>'BTREE','COMMENT'=>'分组与名字'],
         ],
         'PRIMARY'=>'id',//主键
     ];

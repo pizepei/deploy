@@ -9,6 +9,7 @@
 
 namespace pizepei\deploy;
 
+use pizepei\deploy\model\GitlabMicroServiceDeployConfigModel;
 use pizepei\deploy\model\GitlabSystemHooksModel;
 use pizepei\staging\Controller;
 use pizepei\staging\Request;
@@ -29,11 +30,8 @@ class DeployService
     public function gitlabSystemHooks($SystemHooksData)
     {
         $SystemHooks = GitlabSystemHooksModel::table();
-        return $SystemHooks->field(['id','path_with_namespace'])->repeat('path_with_namespace',1,[]);
-
         $SystemHooksData['system_hooks'] = $SystemHooksData;
         $SystemHooksData['repository_name'] = $SystemHooksData['repository']['name'];
-        $SystemHooksData['path_with_namespace'] = $SystemHooksData['project']['path_with_namespace'];
         $SystemHooksData['path_with_namespace'] = $SystemHooksData['project']['path_with_namespace'];
         $SystemHooksData['ssh_url'] = $SystemHooksData['project']['ssh_url'];
         $result = $SystemHooks->add($SystemHooksData);
@@ -43,6 +41,10 @@ class DeployService
                 // 满足条件执行的代码块
                 break;
             case 'tag':
+                $this->gitlabSystemHooksTag($SystemHooksData);
+                // 满足条件执行的代码块
+                break;
+            case 'tag_push':
                 $this->gitlabSystemHooksTag($SystemHooksData);
                 // 满足条件执行的代码块
                 break;
@@ -62,7 +64,37 @@ class DeployService
      */
     public function gitlabSystemHooksPush($data)
     {
+        $MicroService = GitlabMicroServiceDeployConfigModel::table();
+        $where = [
+            'object_kind'=>'push',//类型
+            'ref'=>$data['ref'],//分支
+            'project_id'=>$data['project_id'],
+            'status'=>2
+        ];
+        $MicroServiceData = $MicroService->where($where)->fetch();
+        /**
+         * 判断当前操作用户是否有权限
+         * trigger_user
+         */
 
+        var_dump($MicroServiceData['trigger_user']);
+
+        $data['object_kind'] = $data['object_kind'];
+        $data['service_name'] = $data['project']['name'];
+        $data['service_description'] = $data['project']['description'];
+        $data['trigger_user'] = [
+            $data['user_id']=>[
+                'user_name'=>$data['user_name'],
+                'user_email'=>$data['user_email'],
+                'user_avatar'=>$data['user_avatar'],
+            ]
+        ];
+//        $res = $MicroService->add($data);
+
+        if (!empty($res)){
+            $res = reset($res);
+            var_dump($res);
+        }
     }
     /**
      * @Author 皮泽培
@@ -74,8 +106,47 @@ class DeployService
      */
     public function gitlabSystemHooksTag($data)
     {
-
+        /**
+         * 通过 类型  ssh地址  仓库名称
+         */
+        GitlabMicroServiceDeployConfigModel::table();
     }
 
+    /**
+     * @Author 皮泽培
+     * @Created 2019/6/24 10:54
+     * @return array [json] 定义输出返回数据
+     * @title  增加服务器配置
+     * @explain 增加部署服务器配置
+     * @throws \Exception
+     */
+    public function addServer()
+    {
+
+    }
+    /**
+     * @Author 皮泽培
+     * @Created 2019/6/24 10:54
+     * @return array [json] 定义输出返回数据
+     * @title  增加服务器与微服务的配置关系
+     * @explain 增加部署服务器配置
+     * @throws \Exception
+     */
+    public function addServerRelevance()
+    {
+
+    }
+    /**
+     * @Author 皮泽培
+     * @Created 2019/6/24 10:54
+     * @return array [json] 定义输出返回数据
+     * @title  增加微服务配置
+     * @explain 增加微服务配置
+     * @throws \Exception
+     */
+    public function addMicroServiceDeployConfig()
+    {
+
+    }
 
 }

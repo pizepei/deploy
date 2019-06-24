@@ -19,6 +19,9 @@ class GitlabSystemHooksModel extends Model
         'id'=>[
             'TYPE'=>'uuid','COMMENT'=>'主键uuid','DEFAULT'=>false,
         ],
+        'ref'=>[
+            'TYPE'=>'varchar(255)', 'DEFAULT'=>'', 'COMMENT'=>'参考信息通常包括分支信息',
+        ],
         'system_hooks'=>[
             'TYPE'=>'json', 'DEFAULT'=>false, 'COMMENT'=>'事件内容',
         ],
