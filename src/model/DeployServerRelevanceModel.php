@@ -28,7 +28,10 @@ class DeployServerRelevanceModel extends Model
             'TYPE'=>'uuid', 'DEFAULT'=>false, 'COMMENT'=>'微服务配置表id',
         ],
         'path'=>[
-            'TYPE'=>'json', 'DEFAULT'=>false, 'COMMENT'=>'项目部署路径',
+            'TYPE'=>'varchar(255)', 'DEFAULT'=>false, 'COMMENT'=>'项目部署路径',
+        ],
+        'reserve_versions'=>[
+            'TYPE'=>'int(10)', 'DEFAULT'=>false, 'COMMENT'=>'项目部署保留版本数量',
         ],
         'vest_user'=>[
             'TYPE'=>'varchar(150)', 'DEFAULT'=>'www', 'COMMENT'=>'项目归属服务器的用户',
