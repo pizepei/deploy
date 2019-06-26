@@ -114,7 +114,9 @@ class DeployService
          * 连接宿主机 parasitifer
          *
          */
-        $parasitifer = [];
+        $parasitifer =[
+
+        ];
         $parasitiferSSH = new Ssh2($parasitifer);
 
         /**
@@ -125,8 +127,10 @@ class DeployService
         //本地构建目录
         $branch = explode('/',$MicroServiceData['ref']);
         $branch = end($branch);
-
-        $local_path = dirname(getcwd()).DIRECTORY_SEPARATOR.'tmp'.DIRECTORY_SEPARATOR.$MicroServiceData['service_name'].DIRECTORY_SEPARATOR.$MicroServiceData['service_group'].DIRECTORY_SEPARATOR.$branch.DIRECTORY_SEPARATOR.date('Y_m_d_H_i_s').DIRECTORY_SEPARATOR;
+        /**
+         * 当前目录  tmp  项目名称  path_with_namespace 项目命名空间  分组  分支  时间
+         */
+        $local_path = dirname(getcwd()).DIRECTORY_SEPARATOR.'tmp'.DIRECTORY_SEPARATOR.$MicroServiceData['path_with_namespace'].DIRECTORY_SEPARATOR.$MicroServiceData['service_group'].DIRECTORY_SEPARATOR.$branch.DIRECTORY_SEPARATOR.date('Y_m_d_H_i_s').DIRECTORY_SEPARATOR;
         /**
          * 构建Shell
          */
@@ -137,10 +141,29 @@ class DeployService
         //        echo $local_path;
         $parasitiferShell = $parasitiferSSH->ssh2_shell_xterm();
         $parasitiferSSH->fwriteXterm($parasitiferShell,'cd '.$local_path);
+        $parasitiferSSH->fgetsXterm($parasitiferShell);
+        /**
+         * 克隆
+         */
+        $clone = 'git clone -q '.$data['ssh_url'];
+        $parasitiferSSH->fwriteXterm($parasitiferShell,$clone);
+        $parasitiferSSH->fgetsXterm($parasitiferShell);
+
+        /**
+         * checkout_sha
+         *  git checkout 5585a95d4af5c3fa101f6d35e524b1970dd60c9c
+         */
+        $checkout = 'git checkout '.$data['checkout_sha'];
+        $parasitiferSSH->fwriteXterm($parasitiferShell,$checkout);
+        /**
+         *composer install  --no-dev
+         */
+        $parasitiferSSH->fwriteXterm($parasitiferShell,'cd '.$data['repository']['name'].DIRECTORY_SEPARATOR.' &&  composer install  --no-dev ');
         $TES = $parasitiferSSH->fgetsXterm($parasitiferShell);
-        $parasitiferSSH->fwriteXterm($parasitiferShell,'pwd');
+        $parasitiferSSH->fwriteXterm($parasitiferShell,'ls');
         $TES = $parasitiferSSH->fgetsXterm($parasitiferShell);
         var_dump($TES);
+
         /**
          *rm -rf ssr/ && git clone git@gitlab.heil.top:root/ssr.git  && chown -R www:www ssr &&  cd ssr/    && composer install  --no-dev && cd ..
          */
