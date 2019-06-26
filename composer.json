@@ -17,8 +17,7 @@
         "pizepei/wechat":"dev-master",
         "php": ">=7.0.0",
         "ext-pdo": "*",
-        "ext-json": "*",
-        "ext-zip": "*"
+        "ext-json": "*"
     },
     "repositories": {
         "0": {
