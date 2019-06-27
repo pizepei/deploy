@@ -139,11 +139,12 @@ class Ssh2
      * @title  获取 Xterm 结果
      * @explain 超时限制单位s默认30s
      */
-    public function fgetsXterm($shell,$astrict=70)
+    public function fgetsXterm($shell,$astrict=100)
     {
         $result = [];
         $time = time();
         while(preg_match($this->pattern,$fgets = fgets($shell)) === 0  || time()-$time >$astrict ) {
+            usleep(40000);
             if(!empty($fgets))
             {
                 $result[] = $fgets;
@@ -151,6 +152,22 @@ class Ssh2
         }
         $result[] = $fgets;
         return ['result'=>$result,'time'=>['start'=>$time,'over'=>time()-$time],'astrict'=>$astrict];
+    }
+
+    /**
+     * @Author 皮泽培
+     * @Created 2019/6/26 14:13
+     * @param string $local_file
+     * @param string $remote_file
+     * @param int $create_mode
+     * @return array
+     * @title  向远处服务器复制文件
+     * @explain 向远处服务器复制文件
+     * @throws \Exception
+     */
+    public function ssh2_scp_send(string $local_file,string $remote_file,int $create_mode= 0644)
+    {
+        return ssh2_scp_send($this->conn, $local_file, $remote_file,$create_mode);
     }
 
 }

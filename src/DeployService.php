@@ -39,17 +39,18 @@ class DeployService
         $SystemHooksData['path_with_namespace'] = $SystemHooksData['project']['path_with_namespace'];
         $SystemHooksData['ssh_url'] = $SystemHooksData['project']['ssh_url'];
         $result = $SystemHooks->add($SystemHooksData);
+        $result = reset($result);
         switch($SystemHooksData['object_kind']) {
             case 'push':
-                $this->gitlabSystemHooksPush($SystemHooksData);
+                $this->gitlabSystemHooksPush($SystemHooksData,$result['id']);
                 // 满足条件执行的代码块
                 break;
             case 'tag':
-                $this->gitlabSystemHooksTag($SystemHooksData);
+                $this->gitlabSystemHooksTag($SystemHooksData,$result);
                 // 满足条件执行的代码块
                 break;
             case 'tag_push':
-                $this->gitlabSystemHooksTag($SystemHooksData);
+                $this->gitlabSystemHooksTag($SystemHooksData,$result);
                 // 满足条件执行的代码块
                 break;
             default:
@@ -66,8 +67,10 @@ class DeployService
      * @explain Hooks Push 处理
      * @throws \Exception
      */
-    public function gitlabSystemHooksPush($data)
+    public function gitlabSystemHooksPush($data,$id)
     {
+        ignore_user_abort();
+        set_time_limit(500);
         $MicroService = GitlabMicroServiceDeployConfigModel::table();
         $where = [
             'object_kind'=>'push',//类型
@@ -96,8 +99,61 @@ class DeployService
          * 获取目标服务器配置
          */
         $ServerConfig = DeployServerConfigModel::table()->get($ServerRelevanceData['serve_id']??'');
+
+
         /**
-         * 创建链接ssh2
+         * 本地构建项目
+         */
+        $branch = explode('/',$MicroServiceData['ref']);
+        $branch = end($branch);//获取分支名称
+        /**
+         * 当前目录  tmp  项目名称  path_with_namespace 项目命名空间  分组  分支  时间
+         */
+        $local_path = dirname(getcwd()).DIRECTORY_SEPARATOR.'tmp'.DIRECTORY_SEPARATOR.'deploy'.DIRECTORY_SEPARATOR.$MicroServiceData['path_with_namespace'].DIRECTORY_SEPARATOR.$MicroServiceData['service_group'].DIRECTORY_SEPARATOR.$branch.DIRECTORY_SEPARATOR.date('Y_m_d_H_i_s').DIRECTORY_SEPARATOR;
+//        $local_path = '/www/wwwroot/oauth.heil.top/tmp/deploy/kernel/config/productionTest/master/2019_06_27_13_46_58/';
+
+        /**
+         * 构建Shell前创建目录
+         */
+        if(!Func:: M('file') ::createDir($local_path))
+        {
+            return ['error'=>'创建构建目录失败'];
+        }
+        /**
+         * 进入创建好的构建目录
+         */
+        $Shell[] = 'cd '.$local_path;
+        /**
+         * 克隆项目
+         */
+        $Shell[] = 'git clone -q '.$data['ssh_url'];
+        /**
+         * 切换到当前事件分支 checkout_sha
+         */
+        $Shell[] = 'git checkout  '.$data['checkout_sha'];
+        /**
+         *安装CD到git目录 composer   composer install  --no-dev
+         */
+        $Shell[] = 'cd '.$data['repository']['name'].DIRECTORY_SEPARATOR.' &&  pwd';
+        $Shell[] = ['composer install  --no-dev',300];
+        /**
+         * 获取当前目录结构
+         */
+        $Shell[] = 'ls -la';
+        /**
+         * 连接宿主机 parasitifer 进行构建
+         */
+        $parasitiferSSH = new Ssh2(\Deploy::buildServer);
+        $execXtermResult = $this->execXterm($parasitiferSSH,$Shell);
+
+        $SystemHooks = GitlabSystemHooksModel::table();
+        $SystemHooks->where(['id'=>$id])->update(['result'=>json_encode($execXtermResult),'status'=>2]);
+        /**
+         *rm -rf ssr/ && git clone git@gitlab.heil.top:root/ssr.git  && chown -R www:www ssr &&  cd ssr/    && composer install  --no-dev && cd ..
+         */
+
+        /**
+         * 创建链接目标服务器ssh2
          */
         $config=[
             'host'=>$ServerConfig['server_ip'],
@@ -110,63 +166,9 @@ class DeployService
         ];
         $SSH = new Ssh2($config);
 
-        /**
-         * 连接宿主机 parasitifer
-         *
-         */
-        $parasitifer =[
 
-        ];
-        $parasitiferSSH = new Ssh2($parasitifer);
 
-        /**
-         * 本地构建项目
-         * $ServerRelevanceData
-         * service_name,service_group
-         */
-        //本地构建目录
-        $branch = explode('/',$MicroServiceData['ref']);
-        $branch = end($branch);
-        /**
-         * 当前目录  tmp  项目名称  path_with_namespace 项目命名空间  分组  分支  时间
-         */
-        $local_path = dirname(getcwd()).DIRECTORY_SEPARATOR.'tmp'.DIRECTORY_SEPARATOR.$MicroServiceData['path_with_namespace'].DIRECTORY_SEPARATOR.$MicroServiceData['service_group'].DIRECTORY_SEPARATOR.$branch.DIRECTORY_SEPARATOR.date('Y_m_d_H_i_s').DIRECTORY_SEPARATOR;
-        /**
-         * 构建Shell
-         */
-        if(!Func:: M('file') ::createDir($local_path))
-        {
-            return ['error'=>'创建构建目录失败'];
-        }
-        //        echo $local_path;
-        $parasitiferShell = $parasitiferSSH->ssh2_shell_xterm();
-        $parasitiferSSH->fwriteXterm($parasitiferShell,'cd '.$local_path);
-        $parasitiferSSH->fgetsXterm($parasitiferShell);
-        /**
-         * 克隆
-         */
-        $clone = 'git clone -q '.$data['ssh_url'];
-        $parasitiferSSH->fwriteXterm($parasitiferShell,$clone);
-        $parasitiferSSH->fgetsXterm($parasitiferShell);
 
-        /**
-         * checkout_sha
-         *  git checkout 5585a95d4af5c3fa101f6d35e524b1970dd60c9c
-         */
-        $checkout = 'git checkout '.$data['checkout_sha'];
-        $parasitiferSSH->fwriteXterm($parasitiferShell,$checkout);
-        /**
-         *composer install  --no-dev
-         */
-        $parasitiferSSH->fwriteXterm($parasitiferShell,'cd '.$data['repository']['name'].DIRECTORY_SEPARATOR.' &&  composer install  --no-dev ');
-        $TES = $parasitiferSSH->fgetsXterm($parasitiferShell);
-        $parasitiferSSH->fwriteXterm($parasitiferShell,'ls');
-        $TES = $parasitiferSSH->fgetsXterm($parasitiferShell);
-        var_dump($TES);
-
-        /**
-         *rm -rf ssr/ && git clone git@gitlab.heil.top:root/ssr.git  && chown -R www:www ssr &&  cd ssr/    && composer install  --no-dev && cd ..
-         */
 
 
 
@@ -202,6 +204,37 @@ class DeployService
         //    //var_dump($res);
         //}
     }
+
+    /**
+     * @Author 皮泽培
+     * @Created 2019/6/27 11:46
+     * @title  批量执行命令
+     * @explain 批量执行命令
+     * @throws \Exception
+     */
+    public function execXterm(Ssh2 $SSH,array $order)
+    {
+        /**
+         * 连接
+         */
+        $parasitiferShell = $SSH->ssh2_shell_xterm();
+        /**
+         * 循环执行目录
+         */
+        $result = [];
+        foreach ($order as $value)
+        {
+            if (is_string($value) && !empty($value)){
+                $SSH->fwriteXterm($parasitiferShell,$value);
+                $result[$value] = $SSH->fgetsXterm($parasitiferShell);
+            }else if (is_array($value) && !empty($value)){
+                $SSH->fwriteXterm($parasitiferShell,$value[0]);
+                $result[$value[0]] = $SSH->fgetsXterm($parasitiferShell,$value[1]);
+            }
+        }
+        return $result;
+    }
+
     /**
      * @Author 皮泽培
      * @Created 2019/6/21 10:22
