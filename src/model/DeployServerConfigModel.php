@@ -67,6 +67,9 @@ class DeployServerConfigModel extends Model
         'period'=>[
             'TYPE'=>'varchar(255)', 'DEFAULT'=>'', 'COMMENT'=>'期限',
         ],
+        'bt_api'=>[
+            'TYPE'=>"json", 'DEFAULT'=>false, 'COMMENT'=>'bt面板配置',
+        ],
         'INDEX'=>[
             ['TYPE'=>'UNIQUE','FIELD'=>'server_ip','NAME'=>'server_ip','USING'=>'BTREE','COMMENT'=>'服务器ip'],
         ],

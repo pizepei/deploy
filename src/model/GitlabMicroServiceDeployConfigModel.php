@@ -32,6 +32,19 @@ class GitlabMicroServiceDeployConfigModel extends Model
         'service_description'=>[
             'TYPE'=>'varchar(1000)', 'DEFAULT'=>'', 'COMMENT'=>'项目描述',
         ],
+        //服务保留部署版本、服务部署配置信息
+        'deploy_config'=>[
+            'TYPE'=>'json', 'DEFAULT'=>false, 'COMMENT'=>'项目本身通过本配置向配置中心获取租客的配置（包括saas模式下的配置获取）',
+        ],
+        'retain_count'=>[
+            'TYPE'=>'int(3)', 'DEFAULT'=>'', 'COMMENT'=>'保留项目部署记录数量',
+        ],
+        'shell'=>[
+            'TYPE'=>'json', 'DEFAULT'=>false, 'COMMENT'=>'部署时的额外shell',
+        ],
+        'status'=>[
+            'TYPE'=>"ENUM('1','2','3','4','5')", 'DEFAULT'=>'1', 'COMMENT'=>'1停用2、正常3、进行中',
+        ],
         //***************************git信息********************************************
         'project_id'=>[
             'TYPE'=>'int(10)','DEFAULT'=>0,'COMMENT'=>'git项目id',
@@ -57,12 +70,7 @@ class GitlabMicroServiceDeployConfigModel extends Model
         'service_group'=>[
             'TYPE'=>"ENUM('develop','production','developTest','productionTest')", 'DEFAULT'=>'develop', 'COMMENT'=>'环境分组',
         ],
-        'shell'=>[
-            'TYPE'=>'json', 'DEFAULT'=>false, 'COMMENT'=>'部署时的额外shell',
-        ],
-        'status'=>[
-            'TYPE'=>"ENUM('1','2','3','4','5')", 'DEFAULT'=>'1', 'COMMENT'=>'1停用2、正常3、进行中',
-        ],
+
         'INDEX'=>[
             ['TYPE'=>'UNIQUE','FIELD'=>'service_name,service_group','NAME'=>'service_name,service_group','USING'=>'BTREE','COMMENT'=>'分组与名字'],
         ],
