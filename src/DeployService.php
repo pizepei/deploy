@@ -10,6 +10,7 @@
 namespace pizepei\deploy;
 
 use function MongoDB\BSON\fromJSON;
+use pizepei\config\InitializeConfig;
 use pizepei\deploy\model\DeployServerConfigModel;
 use pizepei\deploy\model\DeployServerRelevanceModel;
 use pizepei\deploy\model\GitlabMicroServiceDeployConfigModel;
@@ -21,6 +22,8 @@ use pizepei\staging\Request;
 
 class DeployService
 {
+
+    const _DS_ = DIRECTORY_SEPARATOR;
 
     /**
      * @Author 皮泽培
@@ -100,7 +103,6 @@ class DeployService
          */
         $ServerConfig = DeployServerConfigModel::table()->get($ServerRelevanceData['serve_id']??'');
 
-
         /**
          * 本地构建项目
          */
@@ -137,6 +139,12 @@ class DeployService
         $Shell[] = 'cd '.$data['repository']['name'].DIRECTORY_SEPARATOR.' &&  pwd';
         $Shell[] = ['composer install  --no-dev',300];
         /**
+         * 深圳文件权限
+         */
+        $Shell[] = 'cd ..';
+        $Shell[] = 'chown -R www:www ./ ..';
+        $Shell[] = 'cd '.$local_path;
+        /**
          * 获取当前目录结构
          */
         $Shell[] = 'ls -la';
@@ -165,10 +173,33 @@ class DeployService
             'prikey'=>$ServerConfig['ssh2_prikey'],//
         ];
         $SSH = new Ssh2($config);
+        /**
+         * 构建部署配置写入配置文件
+         * $MicroServiceData['deploy_config'];
+         * 注意：部署配置的路径可以配置后期在表中配置
+         */
+        $InitializeConfig = new InitializeConfig();
+        $InitializeConfig->set_config('Deploy',$MicroServiceData['deploy_config'],$local_path.$data['repository']['name'].DIRECTORY_SEPARATOR.'config'.DIRECTORY_SEPARATOR);
+        /**
+         * 对项目代码进行压缩
+         */
 
-
-
-
+        /**
+         * 判断是否区分版本 tga ：每个版本使用自己带版本号的域名服务
+         *      这里需要思考
+         *          1、是否通过给对应版本的设置不同域名
+         *          2、通过nginx对路由进行转发到对应版本的代码
+         *          3、一般情况需要直接有新版本接口可能是框架进行了大升级，这个时候框架可以创建一个分支为分支创建一个服务配置
+         * 准备好策略
+         * 确定目标服务器代码存放路径
+         * 复制本地构建服务器构建好并且打包的项目代码到目标服务器
+         * 解压文件、删除压缩包、设置解压后的文件的权限为www用户组
+         * 请求tb面板api创建网站或者修改网站运行目录
+         *
+         * 删除不需要保留的版本的部署代码（构建服务器和目标服务器上的）
+         *
+         * 保存整个流程为日志（考虑在第一步就开始写日志表，每进行一步追加修改整个日志记录）
+         */
 
 
 
