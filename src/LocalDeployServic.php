@@ -82,13 +82,14 @@ class LocalDeployServic
         {
             $body = json_decode($response->getBody()->getContents(),true);
         }
-        if(!isset($body))
+        if(!isset($body['data']))
         {
             /**
              * 写入日志
              */
             throw new \Exception('初始化配置失败：请求配置中心成功就行body失败',10005);
         }
+        $body = $body['data'];
         /**
          * 获取配置解密
          */
