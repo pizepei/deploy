@@ -20,6 +20,9 @@ use pizepei\terminalInfo\TerminalInfo;
 class LocalDeployServic
 {
 
+    /**
+     * LocalDeployServic constructor.
+     */
     public function __construct()
     {
         return $this;
