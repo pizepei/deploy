@@ -10,9 +10,12 @@
 namespace pizepei\deploy;
 
 
+use GuzzleHttp\Client;
+use pizepei\deploy\model\MicroServiceConfigCenterModel;
 use pizepei\encryption\aes\Prpcrypt;
 use pizepei\encryption\SHA1;
 use pizepei\func\Func;
+use pizepei\terminalInfo\TerminalInfo;
 
 class LocalDeployServic
 {
@@ -31,11 +34,6 @@ class LocalDeployServic
     public function getConfigCenter($data)
     {
         $Prpcrypt = new Prpcrypt(\Deploy::INITIALIZE['appSecret']);
-        $data=[
-            'ProcurementType'=>'Config',//获取类型   Config.php  Dbtabase.php  ErrorOrLogConfig.php
-            'appid'=>\Deploy::INITIALIZE['appid'],//项目标识
-            'domain'=>$_SERVER['HTTP_HOST'],//当前域名
-        ];
         $encrypt_msg = $Prpcrypt->encrypt(json_encode($data),\Deploy::INITIALIZE['appid'],true);
         if(empty($encrypt_msg)){
             throw new \Exception('初始化配置失败：encrypt',10001);
@@ -49,21 +47,189 @@ class LocalDeployServic
         $signature = $SHA1->getSHA1(\Deploy::INITIALIZE['token'],$timestamp,$nonce, $encrypt_msg);
         if(!$signature){ throw new \Exception('初始化配置失败：signature',10002);}
         $postData =  [
-            'nonce'=>$nonce,
-            'timestamp'=>$timestamp,
-            'signature'=>$signature,
-            'encrypt_msg'=>$encrypt_msg,
+            'domain'            =>$_SERVER['HTTP_HOST'],
+            'nonce'             =>$nonce,
+            'timestamp'         =>$timestamp,
+            'signature'         =>$signature,
+            'encrypt_msg'       =>$encrypt_msg,
         ];
         /**
-         * 请求配置接口
-         * \Deploy::INITIALIZE['configCenter']
-         *
+         * GuzzleHttp请求配置接口
+         *service-config
          */
-
+        $client = new Client([
+            'base_uri'=>\Deploy::INITIALIZE['configCenter'],
+            'timeout'  => 3.0,
+        ]);
+        $response = $client->request('post', 'service-config/'.\Deploy::INITIALIZE['appid'],
+            [
+            'form_params'=>$postData,
+            ]);
+        if($response->getStatusCode() !== 200 || $response->getReasonPhrase()!=='OK')
+        {
+            /**
+             * 写入日志
+             */
+            throw new \Exception('初始化配置失败：请求配置中心失败',10004);
+        }
         /**
-         * 获取配置
+         * http请求成功
          */
+        if(in_array('application/json;charset=UTF-8',$response->getHeaders()['Content-Type']))
+        {
+            $body = json_decode($response->getBody()->getContents(),true);
+        }
+        if(!isset($body))
+        {
+            /**
+             * 写入日志
+             */
+            throw new \Exception('初始化配置失败：请求配置中心成功就行body失败',10005);
+        }
+        /**
+         * 获取配置解密
+         */
+        $signature = $SHA1->getSHA1(\Deploy::INITIALIZE['token'],$body['timestamp'],$body['nonce'], $body['encrypt_msg']);
+        if(!$signature){ throw new \Exception('初始化配置失败：signature',10013);}
+        $msg = $Prpcrypt->decrypt($body['encrypt_msg']);
+        if(empty($msg))
+        {
+            $msg = $Prpcrypt->decrypt($body['encrypt_msg']);
+        }
+        if(empty($msg))
+        {
+            throw new \Exception('初始化配置失败：解密错误',10009);
+        }
+        /**
+         * 判断appid 和域名
+         */
+        $result = json_decode($msg[1],true);
+        if(time() - $result['time'] > 120)
+        {
+            throw new \Exception('初始化配置失败：数据过期',10012);
+        }
+        if($msg[2] !== \Deploy::INITIALIZE['appid'] || $result['appid'] !==\Deploy::INITIALIZE['appid'] ||$result['domain'] !==$_SERVER['HTTP_HOST'] || $data['ProcurementType'] !== $result['ProcurementType'])
+        {
+            throw new \Exception('初始化配置失败：appid or domain 不匹配',10010);
+        }
+        /**
+         * 解析数据
+         * 写入配置
+         * 结束
+         */
+        return $result??[];
 
 
     }
+
+    /**
+     * @Author pizepei
+     * @Created 2019/7/5 22:54
+     * @title  初始化对应app项目配置
+     * @explain 初始化对应app项目配置
+     */
+    public function initConfigCenter($body,$appid)
+    {
+
+        $MicroServiceConfig = MicroServiceConfigCenterModel::table();
+        $where['appid'] = $appid;
+        $where['domain'] = $body['domain'];
+
+        $MicroServiceConfigData = $MicroServiceConfig->where($where)->fetch();
+        $date = date('Y-m-d H:i:s');
+
+        $microtime = microtime(true);
+        if(empty($MicroServiceConfigData)){
+            throw new \Exception('初始化配置失败：非法请求,服务不存在不存在',10006);
+        }
+        /**
+         * 判断ip
+         */
+        if(!in_array(TerminalInfo::get_ip(),$MicroServiceConfigData['ip_white_list'])){
+            throw new \Exception('初始化配置失败：非法的请求源',10007);
+        }
+        /**
+         * 进行签名验证
+         */
+        $SHA1 = new SHA1();
+        $signature = $SHA1->getSHA1($MicroServiceConfigData['deploy']['INITIALIZE']['token'],$body['timestamp'],$body['nonce'], $body['encrypt_msg']);
+        if(empty($signature) || $signature !== $body['signature'])
+        {
+            throw new \Exception('初始化配置失败：签名验证失败',10008);
+        }
+        /**
+         * 进行解密
+         */
+        $Prpcrypt = new Prpcrypt($MicroServiceConfigData['deploy']['INITIALIZE']['appSecret']);
+
+        $msg = $Prpcrypt->decrypt($body['encrypt_msg']);
+        if(empty($msg))
+        {
+            $msg = $Prpcrypt->decrypt($body['encrypt_msg']);
+        }
+        if(empty($msg))
+        {
+            throw new \Exception('初始化配置失败：解密错误',10009);
+        }
+        /**
+         * 判断appid 和域名
+         */
+        $result = json_decode($msg[1],true);
+        if(time() - $result['time'] > 120)
+        {
+            throw new \Exception('初始化配置失败：数据过期',10012);
+        }
+        if($msg[2] !== $appid || $result['appid'] !==$appid ||$result['domain'] !==$body['domain'])
+        {
+            throw new \Exception('初始化配置失败：appid or domain 不匹配',10010);
+        }
+        /**
+         * 验证通过根据请求返回数据
+         *  Config.php  Dbtabase.php  ErrorOrLogConfig.php
+         */
+        switch($result['ProcurementType']) {
+            case 'Config':
+                $config = $MicroServiceConfigData['config'];
+                break;
+            case 'Dbtabase':
+                $config = $MicroServiceConfigData['dbtabase'];
+                break;
+            case 'ErrorOrLogConfig':
+                $config = $MicroServiceConfigData['error_or_log'];
+                break;
+            default:
+                // 不满足所有条件执行的代码块
+                break;
+        }
+        /**
+         * 加密
+         * 获取对应的配置信息（带上获取配置的时间和配置中心信息，用来防止重复请求或者错误排查）
+         */
+        $encryptData = [
+            'date'=>$date,
+            'time'=>$microtime,
+            'ProcurementType'=>$result['ProcurementType'],
+            'appid'=>$appid,
+            'config'=>$config,
+            'domain'=>$result['domain'],
+        ];
+        $encrypt_msg = $Prpcrypt->encrypt(json_encode($encryptData),$appid,true);
+        $nonce = Func::M('str')::int_rand(10);
+        $timestamp = time();
+        $SHA1 = new SHA1();
+        $signature = $SHA1->getSHA1($MicroServiceConfigData['deploy']['INITIALIZE']['token'],$timestamp,$nonce, $encrypt_msg);
+        if(!$signature){ throw new \Exception('初始化配置失败：构造配置时 signature',10011);}
+
+        return [
+            'date'              =>$date,
+            'appid'             =>$appid,
+            'domain'            =>$result['domain'] ,
+            'nonce'             =>$nonce,
+            'timestamp'         =>$timestamp,
+            'signature'         =>$signature,
+            'encrypt_msg'       =>$encrypt_msg,
+        ];
+
+    }
+
 }
