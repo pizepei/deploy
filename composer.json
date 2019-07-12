@@ -15,35 +15,10 @@
         "pizepei/model": "dev-master",
         "pizepei/func": "dev-master",
         "pizepei/wechat":"dev-master",
+        "pizepei/encryption":"dev-master",
         "php": ">=7.0.0",
         "ext-pdo": "*",
         "ext-json": "*"
-    },
-    "repositories": {
-        "0": {
-            "type": "git",
-            "url": "git@github.com:pizepei/config-gm.git"
-        },
-        "1": {
-            "type": "git",
-            "url": "git@github.com:pizepei/model.git"
-        },
-        "2": {
-            "type": "git",
-            "url": "git@github.com:pizepei/func.git"
-        },
-        "3": {
-            "type": "git",
-            "url": "git@github.com:pizepei/TerminalInfo.git"
-        },
-        "4": {
-            "type": "git",
-            "url": "git@github.com:pizepei/wechat.git"
-        },
-        "packagist": {
-            "type": "composer",
-            "url": "https://packagist.phpcomposer.com"
-        }
     },
     "autoload": {
         "psr-4": {
