@@ -15,6 +15,7 @@ use pizepei\deploy\model\MicroServiceConfigCenterModel;
 use pizepei\encryption\aes\Prpcrypt;
 use pizepei\encryption\SHA1;
 use pizepei\func\Func;
+use pizepei\helper\Helper;
 use pizepei\terminalInfo\TerminalInfo;
 
 class LocalDeployServic
@@ -44,7 +45,8 @@ class LocalDeployServic
         /**
          * 准备签名
          */
-        $nonce = Func::M('str')::int_rand(10);
+
+        $nonce = Helper::str()->int_rand(10);
         $timestamp = time();
         $SHA1 = new SHA1();
         $signature = $SHA1->getSHA1(\Deploy::INITIALIZE['token'],$timestamp,$nonce, $encrypt_msg);
@@ -218,7 +220,7 @@ class LocalDeployServic
             'domain'=>$result['domain'],
         ];
         $encrypt_msg = $Prpcrypt->encrypt(json_encode($encryptData),$appid,true);
-        $nonce = Func::M('str')::int_rand(10);
+        $nonce = Helper::str()->int_rand(10);
         $timestamp = time();
         $SHA1 = new SHA1();
         $signature = $SHA1->getSHA1($MicroServiceConfigData['deploy']['INITIALIZE']['token'],$timestamp,$nonce, $encrypt_msg);
