@@ -58,39 +58,25 @@ class LocalDeployServic
             'signature'         =>$signature,
             'encrypt_msg'       =>$encrypt_msg,
         ];
-        /**
-         * GuzzleHttp请求配置接口
-         *service-config
-         */
-        $client = new Client([
-            'base_uri'=>\Deploy::INITIALIZE['configCenter'],
-            'timeout'  => 3.0,
+
+
+        $rws  = Helper::init()->httpRequest(\Deploy::INITIALIZE['configCenter'].'service-config/'.\Deploy::INITIALIZE['appid'],Helper::init()->json_encode($postData),[
         ]);
-        $response = $client->request('post', 'service-config/'.\Deploy::INITIALIZE['appid'],
-            [
-            'form_params'=>$postData,
-            ]);
-        if($response->getStatusCode() !== 200 || $response->getReasonPhrase()!=='OK')
-        {
-            /**
-             * 写入日志
-             */
+        if ($rws['RequestInfo']['http_code'] !== 200){
             throw new \Exception('初始化配置失败：请求配置中心失败',10004);
         }
-        /**
-         * http请求成功
-         */
-        if(in_array('application/json;charset=UTF-8',$response->getHeaders()['Content-Type']))
-        {
-            $body = json_decode($response->getBody()->getContents(),true);
-        }
-        if(!isset($body['data']))
-        {
-            /**
-             * 写入日志
-             */
+//        var_dump($rws,Helper::init()->is_empty($rws,'body'));
+        if (Helper::init()->is_empty($rws,'body')){
             throw new \Exception('初始化配置失败：请求配置中心成功就行body失败',10005);
         }
+        if ($rws['RequestInfo']['content_type'] == 'application/json;charset=UTF-8'){
+           $body =  Helper::init()->json_decode($rws['body']);
+
+        }
+        if (Helper::init()->is_empty($body,'data')){
+            throw new \Exception('初始化配置失败：请求配置中心成功就行body失败',10005);
+        }
+
         $body = $body['data'];
         /**
          * 获取配置解密
