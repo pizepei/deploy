@@ -60,8 +60,8 @@ class LocalDeployServic
         ];
 
 
-        $rws  = Helper::init()->httpRequest(\Deploy::INITIALIZE['configCenter'].'service-config/'.\Deploy::INITIALIZE['appid'],Helper::init()->json_encode($postData),[
-        ]);
+        $rws  = Helper::init()->httpRequest(\Deploy::INITIALIZE['configCenter'].'service-config/'.\Deploy::INITIALIZE['appid'],Helper::init()->json_encode($postData));
+
         if ($rws['RequestInfo']['http_code'] !== 200){
             throw new \Exception('初始化配置失败：请求配置中心失败',10004);
         }
@@ -69,10 +69,7 @@ class LocalDeployServic
         if (Helper::init()->is_empty($rws,'body')){
             throw new \Exception('初始化配置失败：请求配置中心成功就行body失败',10005);
         }
-        if ($rws['RequestInfo']['content_type'] == 'application/json;charset=UTF-8'){
-           $body =  Helper::init()->json_decode($rws['body']);
-
-        }
+        $body =  Helper::init()->json_decode($rws['body']);
         if (Helper::init()->is_empty($body,'data')){
             throw new \Exception('初始化配置失败：请求配置中心成功就行body失败',10005);
         }
