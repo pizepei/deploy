@@ -59,13 +59,11 @@ class LocalDeployServic
             'encrypt_msg'       =>$encrypt_msg,
         ];
 
-
         $rws  = Helper::init()->httpRequest(\Deploy::INITIALIZE['configCenter'].'service-config/'.\Deploy::INITIALIZE['appid'],Helper::init()->json_encode($postData));
 
         if ($rws['RequestInfo']['http_code'] !== 200){
             throw new \Exception('初始化配置失败：请求配置中心失败',10004);
         }
-//        var_dump($rws,Helper::init()->is_empty($rws,'body'));
         if (Helper::init()->is_empty($rws,'body')){
             throw new \Exception('初始化配置失败：请求配置中心成功就行body失败',10005);
         }
@@ -73,7 +71,9 @@ class LocalDeployServic
         if (Helper::init()->is_empty($body,'data')){
             throw new \Exception('初始化配置失败：请求配置中心成功就行body失败',10005);
         }
-
+        if ($body['code'] !==200){
+            throw new \Exception('初始化配置失败：'.$body['msg'],10005);
+        }
         $body = $body['data'];
         /**
          * 获取配置解密
@@ -107,10 +107,7 @@ class LocalDeployServic
          * 结束
          */
         return $result??[];
-
-
     }
-
     /**
      * @Author pizepei
      * @Created 2019/7/5 22:54
@@ -119,7 +116,6 @@ class LocalDeployServic
      */
     public function initConfigCenter($body,$appid)
     {
-
         $MicroServiceConfig = MicroServiceConfigCenterModel::table();
         $where['appid'] = $appid;
         $where['domain'] = $body['domain'];
@@ -135,7 +131,7 @@ class LocalDeployServic
          * 判断ip
          */
         if(!in_array(TerminalInfo::get_ip(),$MicroServiceConfigData['ip_white_list'])){
-            throw new \Exception('初始化配置失败：非法的请求源',10007);
+            throw new \Exception('初始化配置失败：非法的请求源:'.TerminalInfo::get_ip(),10007);
         }
         /**
          * 进行签名验证
