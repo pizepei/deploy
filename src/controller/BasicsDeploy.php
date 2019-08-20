@@ -5,308 +5,196 @@
  */
 namespace pizepei\deploy\controller;
 
-use authority\app\Resource;
+use pizepei\deploy\DeployService;
+use pizepei\deploy\LocalDeployServic;
+use pizepei\model\db\TableAlterLogModel;
 use pizepei\staging\Controller;
 use pizepei\staging\Request;
-use service\document\DocumentService;
 use ZipArchive;
 
 class BasicsDeploy extends Controller
 {
-    protected $path  = '';
     /**
-     * @param \pizepei\staging\Request $Request html
+     * @param \pizepei\staging\Request $Request
      *      path [object] 路径参数
-     *          type [string] 路径
-     * @return array [html]
-     * @title  文档入口（开发助手）
-     * @explain 文档入口（API文档、权限文档、公共资源文档）
-     * @router get index/:type[string].html debug:true
-     * @throws \Exception
-     */
-    public function index(Request $Request)
-    {
-
-        $type = $Request->path('type')==='index'?'document':$Request->path('type');
-        return $this->view($type);
-    }
-    /**
+     *           domain [string] 域名
      * @return array [json]
-     *      data [raw] 菜单数据
-     * @title  API文档 侧边导航
-     * @explain  侧边导航
-     * @router get nav-list debug:true
+     * @title  同步所有model的结构
+     * @explain 建议生产发布新版本时执行
+     * @router get cliDbInitStructure
      * @throws \Exception
      */
-    public function navList()
+    public function cliDbInitStructure(Request $Request)
     {
-        return $this->app->Route()->noteBlock;
+        # 命令行没事 saas
+        $model = TableAlterLogModel::table();
+        return $model->initStructure('',true);
     }
 
     /**
      * @Author pizepei
-     * @Created 2019/2/12 23:01
-     *
+     * @Created 2019/6/12 22:39
      * @param \pizepei\staging\Request $Request
-     *      get [object] 路径参数
-     *          father [string] 父路径
-     *          index [string] 当前路径
-     * @return array [json]
-     *      data [object] 控制器数据
-     *          fatherInfo [object] 控制器数据
-     *              title [string] 控制器标题
-     *              class [string] 控制器名
-     *              User [string] 创建者
-     *              basePath [string] 控制器根路由
-     *              authGroup [string] 控制器权限分组
-     *              baseAuth [string] 控制器根权限
-     *          info [raw] 详细数据
-     * @title  获取API文档信息
-     * @explain  根据点击侧边导航获取对应的获取API文档信息
-     * @router get index-nav debug:true
-     * @throws \Exception
+     * @title  删除本地配置接口
+     * @explain 当接口被触发时会删除本地所有Config配置，配置会在项目下次被请求时自动请求接口生成
+     * @router delete Config
      */
-    public function getNav(Request $Request)
+    public function deleteConfig(Request $Request)
     {
-        $input = $Request->input();
-        $fatherInfo = $this->app->Route()->noteBlock[$input['father']];
-        $fatherInfo['index'] = $input['father'];
-        $info = $this->app->Route()->noteBlock[$input['father']]['route'][$input['index']]??null;
-        if(!empty($info)){
-            $info['index'] = $input['index'];
-        }
-        return $this->succeed([
-                'fatherInfo'=>$fatherInfo,
-                'info'=>$info]
-        );
 
     }
     /**
      * @Author pizepei
-     * @Created 2019/2/14 23:01
-     *
+     * @Created 2019/6/12 22:43
      * @param \pizepei\staging\Request $Request
-     *      get [object] get参数
-     *          father [string required] 父路径
-     *          index [string required] 当前路径
-     *          type [string required] 参数类型
-     * @return array [json]
-     *      data [objectList] 数据
-     *          field [string] 参数名字
-     *          type [string] 参数数据类型
-     *          fieldExplain [string] 参数说明
-     *          fieldRestrain [string] 参数约束
-     * @title  获取API的请求参数信息
-     * @explain  根据点击侧边导航获取对应的获取API文档信息
-     * @router get request-param
-     * @throws \Exception
-     */
-    public function RequestParam(Request $Request)
-    {
-        $input = $Request->input();
-
-        $info = $this->app->Route()->noteBlock[$input['father']]['route'][$input['index']]??null;
-        if(!empty($info)){
-            $info['index'] = $input['index'];
-        }
-        if(isset($info['Param']) && !empty($info['Param'])){
-            $info = $info['Param'][$input['type']]['substratum']??[];
-            if(!empty($info)){
-
-                $Document = new DocumentService;
-                $infoData = $Document ->getParamInit($info);
-            }
-        }else{
-            $info = [];
-        }
-        return $this->succeed($infoData??[],'获取'.$input['index'].'成功',0);
-    }
-
-
-    /**
-     * @Author pizepei
-     * @Created 2019/2/14 23:01
+     *      raw [object] 路径
+     *          path [string] 需要删除的runtime目录下的目录为空时删除runtime目录
+     * @title  删除本地runtime目录下的目录
+     * @explain 删除runtime目录下的目录或者runtime目录本身。配置会在项目下次被请求时自动请求接口生成runtime
      *
-     * @param \pizepei\staging\Request $Request
-     *      get [object] get参数
-     *          father [string required] 父路径
-     *          index [string required] 当前路径
-     *          type [string required] 参数类型
      * @return array [json]
-     *      data [objectList] 数据
-     *          field [string] 参数名字
-     *          type [string] 参数数据类型
-     *          fieldExplain [string] 参数说明
-     *          fieldRestrain [string] 参数约束
-     * @title  获取API的返回参数信息
-     * @explain  根据点击侧边导航获取对应的获取API文档信息
-     * @router get return-param debug:true
      * @throws \Exception
+     * @router delete runtime
      */
-    public function ReturnParam(Request $Request)
+    public function deleteCache(Request $Request)
     {
-        $input = $Request->input();
-        $info = $this->app->Route()->noteBlock[$input['father']]['route'][$input['index']]??null;
-        if($info['ReturnType'] != $input['type']){
-            return $this->succeed([],'获取1'.$input['index'].'成功',0);
-        }
-        if(!empty($info)){
-            $info['index'] = $input['index'];
-        }
-        if(isset($info['Return']) && !empty($info['Return'])){
-            $info = $info['Return']??[];
-            if(!empty($info)){
-                $Document = new DocumentService;
-                $infoData = $Document ->getParamInit($info);
-            }
-        }else{
-            $info = [];
-        }
-        return $this->succeed($infoData??[],'获取'.$input['index'].'成功',0);
-    }
-
-
-    /**
-     * @Author pizepei
-     * @Created 2019/4/25 14:01
-     *
-     * @param \pizepei\staging\Request $Request
-     *      get [object] get参数
-     *          projectId [string required] 项目id
-     * @return array [json]
-     *      list [objectList] 数据
-     *          id [string] 权限id
-     *          name [string] 权限名
-     *          pid [string] 父id
-     *          value [string] 参数
-     *          checked [string] 选中
-     *      checkedId [raw] 被选中的id
-     * @title  获取权限树
-     * @explain  根据点击侧边导航获取对应的获取API文档信息
-     * @router get jurisdiction-list debug:true
-     * @throws \Exception
-     */
-    public function jurisdictionList(Request $Request)
-    {
-        return $this->succeed([
-            'list'=>Resource::initJurisdictionList($this->app->Route()->Permissions,$this->app),
-            'checkedId'=>['getMenu','409bfd433e7dd7af7d7530ad5fb7bc46'],
-        ]);
-
-
-    }
-
-    /**
-     * @Author 皮泽培
-     * @Created 2019/5/18 17:57
-     * @param Request $Request
-     *   path [object] 路径参数
-     *   get [object] 路径参数
-     *   post [object] post参数
-     *      name [string] 姓名
-     *   rule [object] 数据流参数
-     * @return array [json] 定义输出返回数据
-     *      id [uuid] uuid
-     *      name [object] 同学名字
-     * @title  路由标题
-     * @explain 路由功能说明
-     * @authGroup basics.menu.getMenu:权限分组1,basics.index.menu:权限分组2
-     * @authExtend UserExtend.list:拓展权限
-     * @baseAuth Resource:public
-     * @throws \Exception
-     * @router post exportPhpStormSettings
-     */
-    public function exportPhpStormSettings(Request $Request)
-    {
-        if($Request->post('name') === 'settings.zip' || $Request->post('name') === 'settings')
-        {
-            throw new \Exception('不能为settings关键字');
-        }
-        $zip = new ZipArchive();
-        $path = "..".DIRECTORY_SEPARATOR.'tmp'.DIRECTORY_SEPARATOR.'PhpStormSettings'.DIRECTORY_SEPARATOR;
-        $route = $path.$Request->post('name');
-        $file = $path.'settings.zip';
+        $path = $Request->raw('path');
         /**
-         *
-         * 怎么下载？
+         * 判断是否有方法的目录
+         * 如 ../   ./
          */
-        if ($zip->open($file) === true){
-
-            $mcw = $zip->extractTo($route);//解压到$route这个目录中
-
-            $zip->close();
+        if(strpos($path,'..'.DIRECTORY_SEPARATOR) === 0 || strpos($path,'..'.DIRECTORY_SEPARATOR) > 0 ){
+            return $this->error([],'非法目录');
         }
-        return self::fileTemplates_includes_PHP_Function_Doc_Comment['content'];
+        if(strpos($path,'.'.DIRECTORY_SEPARATOR) === 0 || strpos($path,'.'.DIRECTORY_SEPARATOR) > 0 ){
+            return $this->error([],'非法目录');
+        }
+        if($path ==='runtime')
+        {
+            $path = '..'.DIRECTORY_SEPARATOR.'runtime'.DIRECTORY_SEPARATOR;
+        }else{
+            $path = '..'.DIRECTORY_SEPARATOR.'runtime'.DIRECTORY_SEPARATOR.$path.DIRECTORY_SEPARATOR;
+        }
+        Helper::file()->deldir($path);
     }
-
-
-
-
 
     /**
      * @Author pizepei
-     * @Created 2019/4/23 23:02
+     * @Created 2019/6/16 22:43
      * @param \pizepei\staging\Request $Request
+     *      post [raw] 路径参数
+     *          object_kind [string] 操作对象性质 push tag
+     *          event_name [string] 事件名
+     *          after [string] 上一个git
+     *          before [string] 当前git
+     *          ref [string] 参考 refs/tags/1.01  或者 refs/heads/master
+     *          checkout_sha [string]
+     *          message [string]
+     *          user_id [int] 事件触发者id
+     *          user_name [string] 事件触发者用户名
+     *          user_email [string] 事件触发者 邮箱
+     *          user_avatar [string] 事件触发者 头像
+     *          project_id [int] 事件对象ID
+     *          project [raw] 对象详情
+     *              name [string] 项目名
+     *              description [string] 项目描述
+     *              ssh_url [string] ssh_url
+     *              default_branch [string]
+     *              path_with_namespace [string]
+     *          commits [raw] 提交信息
+     *          total_commits_count [int] 提交数量
+     *          repository [raw] 代码仓库
      * @return array [json]
-     * @title  框架开发文档菜单
-     * @explain 临时框架开发文档菜单
-     * @authGroup basics.index.message:控制台新信息
-     * @router get normative/new
+     *      data [raw]
+     * @throws \Exception
+     * @title  gitlab System hooks
+     * @explain System hooks
+     * @router post gitlabSystemHooks
      */
-    public function messageNew(Request $Request)
+    public function gitlabSystemHooks(Request $Request)
     {
-        header('access-Control-Allow-Origin:*');
-        $data = [
-            "HelloWorld"=> [
-                'title'=>'Hello world',
-                'route'=>[
-                    'purpose'=>['title'=>'开发初衷'],
-                    'character'=>['title'=>'框架特性'],
-                    'standard'=>['title'=>'开发规范'],
-                    'environment'=>['title'=>'开发环境'],
-                    'saas'=>['title'=>'SAAS模式'],
-                    'Docker'=>['title'=>'Docker支持'],
-                    'production'=>['title'=>'生产环境'],
-                ]
-            ],
-            "note"=> [
-                'title'=>'注解路由',
-                'route'=>[
-                    'purpose'=>['title'=>'入门'],
-                    'character'=>['title'=>'控制器注解'],
-                    'standard'=>['title'=>'方法注解'],
-                    'environment'=>['title'=>'权限注解'],
-                    'saas'=>['title'=>'请求过滤'],
-                    'Docker'=>['title'=>'输出过滤'],
-                    'production'=>['title'=>'生产环境'],
-                ]
-            ],
-        ];
-
-        return $this->succeed($data);
+        file_put_contents('txt1.txt',file_get_contents("php://input"));
+        if(!isset($_SERVER['HTTP_X_GITLAB_TOKEN']) || $_SERVER['HTTP_X_GITLAB_TOKEN']!== \Deploy::GITLAB['HTTP_X_GITLAB_TOKEN']  )
+        {
+            return $this->error('非法请求');
+        }
+        $SystemHooksData = json_decode(file_get_contents("php://input"),true);
+        $DeployService = new DeployService();
+        return $DeployService->gitlabSystemHooks($SystemHooksData);
     }
 
+    /**
+     * @Author pizepei
+     * @Created 2019/6/16 22:43
+     * @param \pizepei\staging\Request $Request
+     * @return array [html]
+     *    data [raw]
+     * @throws \Exception
+     * @title  gitlab System hooks
+     * @explain System hooks
+     * @router get test
+     */
+    public function test(Request $Request)
+    {
+        return $this->view('ace');
+        /**
+         * MicroServiceConfigCenterModel
+         */
+//        $MicroServiceConfigCenter = MicroServiceConfigCenterModel::table();
+//        $InitializeConfig = new InitializeConfig();
+//        $Config = $InitializeConfig->get_const('config\app\SetConfig');
+//        $dbtabase = $InitializeConfig->get_const('config\app\SetDbtabase');
+//        $error_log = $InitializeConfig->get_const('config\app\SetErrorOrLog');
+//
+//
+//        $deploy = $InitializeConfig->get_deploy_const('..'.DIRECTORY_SEPARATOR.'config'.DIRECTORY_SEPARATOR);
+//        $data = [
+//            'name'              =>'测试',
+//            'appid'             =>$deploy['INITIALIZE']['appid'],
+//            'service_group'     =>'develop',
+//            'ip_white_list'     =>['47.106.89.196'],
+//            'config'            =>$Config,
+//            'dbtabase'          =>$dbtabase,
+//            'error_or_log'      =>$error_log,
+//            'deploy'            =>$deploy,
+//            'domain'            =>$_SERVER['HTTP_HOST'],
+//        ];
+//
+//        return $MicroServiceConfigCenter->add($data);
+        $LocalDeployServic = new LocalDeployServic();
+        $data=[
+            'ProcurementType'=>'ErrorOrLogConfig',//获取类型   Config.php  Dbtabase.php  ErrorOrLogConfig.php
+            'appid'=>\Deploy::INITIALIZE['appid'],//项目标识
+            'domain'=>$_SERVER['HTTP_HOST'],//当前域名
+            'time'=>time(),//
+        ];
+        return $LocalDeployServic->getConfigCenter($data);
 
+    }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-    const fileTemplates_includes_PHP_Function_Doc_Comment=[
-        'content'=><<<ABC
-这里可以是任合内容
-我是历的苛夺基
-本原则叶落归根在运
-输费艰难田￥￥&……
-ABC
-    ];
+    /**
+     * @Author pizepei
+     * @Created 2019/7/5 22:40
+     *
+     * @param \pizepei\staging\Request $Request
+     *      raw [object] 路径参数
+     *          nonce [int required] 随机数
+     *          timestamp [string required]  时间戳
+     *          signature [string required] 签名
+     *          encrypt_msg [string required] 密文
+     *          domain [string required] 域名
+     *      path [object] 路径参数
+     *          appid [string] 项目appid
+     * @title  获取项目配置接口
+     * @explain 获取项目配置接口（基础配置）。
+     * @throws \Exception
+     * @return array [json]
+     *      data [raw]
+     * @router post service-config/:appid[string]
+     */
+    public function serviceConfig(Request $Request)
+    {
+        $LocalDeploy = new LocalDeployServic();
+        return $this->succeed($LocalDeploy->initConfigCenter($Request->input('','raw'),$Request->path('appid')));
+    }
 }

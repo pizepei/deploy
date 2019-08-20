@@ -60,7 +60,6 @@ class LocalDeployServic
         ];
 
         $rws  = Helper::init()->httpRequest(\Deploy::INITIALIZE['configCenter'].'service-config/'.\Deploy::INITIALIZE['appid'],Helper::init()->json_encode($postData));
-
         if ($rws['RequestInfo']['http_code'] !== 200){
             throw new \Exception('初始化配置失败：请求配置中心失败',10004);
         }
