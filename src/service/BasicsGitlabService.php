@@ -12,7 +12,18 @@ class BasicsGitlabService
     /**
      * 错误代码
      */
-    const ERROR_CODE = [];
+    const ERROR_CODE = [
+        201=>'Created	该POST请求是成功的，并且资源返回为JSON',
+        304=>'Not Modified	表示自上次请求以来资源未被修改',
+        400=>'Bad Request	缺少API请求的必需属性，例如，未给出问题的标题',
+        401=>'Unauthorized	用户未经过身份验证，因此需要有效的用户令牌',
+        403=>'Forbidden	不允许该请求，例如，不允许用户删除项目。',
+        404=>'Not Found	无法访问资源，例如，无法找到资源的ID。',
+        405=>'Method Not Allowed	请求不受支持',
+        409=>'Conflict	已存在冲突资源，例如，创建具有已存在名称的项目',
+        422=>'Unprocessable	无法处理该实体。',
+        500=>'Server Error	在处理请求时，服务器端出现了问题。',
+    ];
 
     /**
      * api请求
@@ -28,10 +39,22 @@ class BasicsGitlabService
             'header'=>['PRIVATE-TOKEN: '.\Deploy::GITLAB['PRIVATE-TOKEN']]
         ]);
         if ($res['code'] !== 200){
-            # 准备错误常数
-            throw new \Exception('请求错误');
+            throw new \Exception(self::ERROR_CODE[$res['code']]??'请求错误');
         }
+        $Helper = Helper::init()::arrayList()->array_explode_value($res['header'],': ',true);
         $body = Helper::init()->json_decode($res['body']);
-        return $this->succeed($body);
+
+        $resData['list'] = $body;
+        $resData['total'] = $Helper['X-Total']; #物品总数
+        $resData['totalPages'] = $Helper['X-Total-Pages']; #总页数
+        $resData['perPage'] = $Helper['X-Per-Page']; # 每页的项目数
+        $resData['page'] = $Helper['X-Page']; # 当前页面的索引（从1开始）
+        $resData['nextPage'] = $Helper['X-Next-Page']; # 下一页的索引
+        $resData['prevPage'] = $Helper['X-Prev-Page']; # 上一页的索引
+        return $resData;
     }
+
+
+
+
 }

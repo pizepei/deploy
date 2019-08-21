@@ -6,9 +6,7 @@
 
 namespace pizepei\deploy\controller;
 
-
-use pizepei\deploy\model\GitlabAccountModel;
-use pizepei\helper\Helper;
+use pizepei\deploy\service\BasicsGitlabService;
 use pizepei\staging\Controller;
 use pizepei\staging\Request;
 
@@ -27,22 +25,9 @@ class BasicsGitlab extends Controller
      */
     public function api(Request $Request)
     {
-        $gitlab = GitlabAccountModel::table();
-//        $data = [
-//            'gitlab_id'=>1,
-//        ];
-//        $gitlab->add();
-        $url = 'https://gitlab.heil.top/api/v3/users';
-        $res = Helper::init()->httpRequest($url,'',[
-            'header'=>['PRIVATE-TOKEN: '.\Deploy::GITLAB['PRIVATE-TOKEN']]
-        ]);
-        if ($res['code'] !== 200){
-            throw new \Exception('请求错误');
-        }
-        $body = Helper::init()->json_decode($res['body']);
-        return $this->succeed($body);
+        $service = new BasicsGitlabService();
+        return $service->apiRequest('projects');
     }
-
     /**
      * @param \pizepei\staging\Request $Request
      *      path [object] 路径参数
@@ -56,16 +41,8 @@ class BasicsGitlab extends Controller
      */
     public function user(Request $Request)
     {
-        $gitlab = GitlabAccountModel::table();
-        $url = 'https://gitlab.heil.top/api/v3/users';
-        $res = Helper::init()->httpRequest($url,'',[
-            'header'=>['PRIVATE-TOKEN: '.\Deploy::GITLAB['PRIVATE-TOKEN']]
-        ]);
-        if ($res['code'] !== 200){
-            throw new \Exception('请求错误');
-        }
-        $body = Helper::init()->json_decode($res['body']);
-        return $this->succeed($body);
+        $service = new BasicsGitlabService();
+        return $this->succeed($service->apiRequest('user'));
     }
     /**
      * @param \pizepei\staging\Request $Request
@@ -75,21 +52,44 @@ class BasicsGitlab extends Controller
      *      data [raw]
      * @title  项目接口
      * @explain 建议生产发布新版本时执行
-     * @router get projects
+     * @router get projects-list
      * @throws \Exception
      */
-    public function projects(Request $Request)
+    public function projectsList(Request $Request)
     {
-        $gitlab = GitlabAccountModel::table();
-        $url = 'https://gitlab.heil.top/api/v3/projects';
-        $res = Helper::init()->httpRequest($url,'',[
-            'header'=>['PRIVATE-TOKEN: '.\Deploy::GITLAB['PRIVATE-TOKEN']]
-        ]);
-        if ($res['code'] !== 200){
-            throw new \Exception('请求错误');
-        }
-        $body = Helper::init()->json_decode($res['body']);
-        return $this->succeed($body);
+        $service = new BasicsGitlabService();
+        return $this->succeed($service->apiRequest('projects'));
+    }
+
+    /**
+     * @return array [json]
+     *      data [raw]
+     * @title  群组列表
+     * @explain 建议生产发布新版本时执行
+     * @router get groups-list
+     * @throws \Exception
+     */
+    public function groupsList()
+    {
+        $service = new BasicsGitlabService();
+        return $this->succeed( $service->apiRequest('groups'));
+    }
+
+    /**
+     * @param \pizepei\staging\Request $Request
+     *      path [object] 路径参数
+     *           id [int] 群组id
+     * @return array [json]
+     *      data [raw]
+     * @title  群组列表
+     * @explain 建议生产发布新版本时执行
+     * @router get groups/:id[int]/projects
+     * @throws \Exception
+     */
+    public function groupsProjectsList(Request $Request)
+    {
+        $service = new BasicsGitlabService();
+        return $this->succeed( $service->apiRequest('groups/'.$Request->path('id').'/projects'));
     }
 
 
