@@ -7,6 +7,10 @@ namespace pizepei\deploy\controller;
 
 use pizepei\deploy\DeployService;
 use pizepei\deploy\LocalDeployServic;
+use pizepei\deploy\model\DeployServerConfigModel;
+use pizepei\deploy\model\DeployServerGroupModel;
+use pizepei\deploy\model\DeployServerRelevanceModel;
+use pizepei\model\db\Model;
 use pizepei\model\db\TableAlterLogModel;
 use pizepei\staging\Controller;
 use pizepei\staging\Request;
@@ -197,4 +201,170 @@ class BasicsDeploy extends Controller
         $LocalDeploy = new LocalDeployServic();
         return $this->succeed($LocalDeploy->initConfigCenter($Request->input('','raw'),$Request->path('appid')));
     }
+
+    /**
+     * @Author pizepei
+     * @Created 2019/8/25 22:40
+     * @param \pizepei\staging\Request $Request
+     * @title  获取主机分组
+     * @explain 获取主机分组列表
+     * @throws \Exception
+     * @return array [json]
+     *      data [raw]
+     * @router get server/group-list
+     */
+    public function getDeployServerGroup(Request $Request)
+    {
+        return $this->succeed(['list'=>DeployServerGroupModel::table()->fetchAll()]);
+    }
+
+
+    /**
+     * @Author pizepei
+     * @Created 2019/8/25 22:40
+     *
+     * @param \pizepei\staging\Request $Request
+     *      post [object] 添加的数据
+     *          name [string] 分组名称
+     *          status [int] 状态
+     *          explain [string] 说明
+     *          serve_group [string] 分组
+     * @title  获取主机分组
+     * @explain 获取主机分组列表
+     * @throws \Exception
+     * @return array [json]
+     *      data [raw]
+     * @router post server/group-list
+     */
+    public function addDeployServerGroup(Request $Request)
+    {
+        if (DeployServerGroupModel::table()->add($Request->post())){
+            return $this->succeed('','添加成功');
+        }
+        return $this->error('','操作失败');
+    }
+
+
+    /**
+     * @Author pizepei
+     * @Created 2019/8/25 22:40
+     * @param \pizepei\staging\Request $Request
+     *      raw [object] 添加的数据
+     *          id [uuid] id
+     *          name [string] 分组名称
+     *          status [int] 状态
+     *          explain [string] 说明
+     *          serve_group [string] 分组
+     * @title  获取主机分组
+     * @explain 获取主机分组列表
+     * @throws \Exception
+     * @return array [json]
+     *      data [raw]
+     * @router put server/group-list
+     */
+    public function editDeployServerGroup(Request $Request)
+    {
+        if (DeployServerGroupModel::table()->where(['id'=>$Request->raw('id')])->update($Request->raw())){
+            return $this->succeed('','修改成功');
+        }
+        return $this->error('','操作失败');
+    }
+
+
+    /**
+     * @Author pizepei
+     * @Created 2019/8/25 22:40
+     * @param \pizepei\staging\Request $Request
+     *      path [object] 添加的数据
+     *          groupid [uuid] 分组id
+     * @title  获取主机分组
+     * @explain 获取主机分组列表
+     * @throws \Exception
+     * @return array [json]
+     *      data [raw]
+     * @router get server/Config-list/:groupid[uuid]
+     */
+    public function getDeployServerConfig(Request $Request)
+    {
+        $Server =  DeployServerConfigModel::table();
+        if ($Request->path('groupid') !== Model::UUID_ZERO){
+            $Server->where(['group_id'=>$Request->path('groupid')]);
+        }
+        $data = $Server->fetchAll();
+        return $this->succeed(['list'=>$data]);
+    }
+
+    /**
+     * @Author pizepei
+     * @Created 2019/8/25 22:40
+     * @param \pizepei\staging\Request $Request
+     *      raw [object] 添加的数据
+     *          name [string] 备注名称
+     *          explain [string] 分组说明
+     *          server_ip [string] ip地址
+     *          ssh2_port [string] 端口
+     *          ssh2_user [string] 登录服务器的账号
+     *          ssh2_auth [string] ssh验证方式
+     *          ssh2_pubkey [string] 公钥
+     *          ssh2_prikey [string] 私钥
+     *          ssh2_password [string] 服务器密码
+     *          serve_group [string] 环境分组
+     *          status [string] 1停用2、正常3、维护4、等待5、异常
+     *          os [string] 服务器系统
+     *          os_versions [string] 服务器系统版本
+     *          operation [string] 环境参数
+     *          period [string] 期限
+     * @title  获取主机分组
+     * @explain 获取主机分组列表
+     * @throws \Exception
+     * @return array [json]
+     *      data [raw]
+     * @router post server/host
+     */
+    public function addDeployServerConfig(Request $Request)
+    {
+        $Server =  DeployServerConfigModel::table();
+        if ($Server->add($Request->raw())){
+            return $this->succeed('','操作成功');
+
+        }
+        return $this->error('','操作失败');
+    }
+    /**
+     * @Author pizepei
+     * @Created 2019/8/25 22:40
+     * @param \pizepei\staging\Request $Request
+     *      path [object] 添加的数据
+     *          id [uuid] id
+     *      raw [object] 添加的数据
+     *          name [string] 备注名称
+     *          explain [string] 分组说明
+     *          server_ip [string] ip地址
+     *          ssh2_port [string] 端口
+     *          ssh2_user [string] 登录服务器的账号
+     *          ssh2_auth [string] ssh验证方式
+     *          ssh2_pubkey [string] 公钥
+     *          ssh2_prikey [string] 私钥
+     *          ssh2_password [string] 服务器密码
+     *          serve_group [string] 环境分组
+     *          status [string] 1停用2、正常3、维护4、等待5、异常
+     *          os [string] 服务器系统
+     *          os_versions [string] 服务器系统版本
+     *          operation [string] 环境参数
+     *          period [string] 期限
+     * @title  获取主机分组
+     * @explain 获取主机分组列表
+     * @throws \Exception
+     * @return array [json]
+     *      data [raw]
+     * @router put server/host/:id[uuid]
+     */
+    public function editDeployServerConfig(Request $Request)
+    {
+        if (DeployServerConfigModel::table()->where(['id'=>$Request->path('id')])->update($Request->raw())){
+            return $this->succeed('','修改成功');
+        }
+        return $this->error('','操作失败');
+    }
+
 }

@@ -3,7 +3,7 @@
  * @Author: 皮泽培
  * @ProductName: normative
  * @Created: 2019/6/24 09:34
- * @title DeployServerConfig 项目部署表的服务器
+ * @title DeployServerConfig 项目部署表的服务器配置
  */
 
 namespace pizepei\deploy\model;
@@ -21,6 +21,15 @@ class DeployServerConfigModel extends Model
     protected $structure = [
         'id'=>[
             'TYPE'=>'uuid','COMMENT'=>'主键uuid','DEFAULT'=>false,
+        ],
+        'group_id'=>[
+            'TYPE'=>'uuid','COMMENT'=>'分组id','DEFAULT'=>Model::UUID_ZERO,
+        ],
+        'name'=>[
+            'TYPE'=>'varchar(128)', 'DEFAULT'=>'', 'COMMENT'=>'备注名称',
+        ],
+        'explain'=>[
+            'TYPE'=>"varchar(600)", 'DEFAULT'=>'', 'COMMENT'=>'分组说明',
         ],
         'server_ip'=>[
             'TYPE'=>'varchar(128)', 'DEFAULT'=>'', 'COMMENT'=>'ip地址',
