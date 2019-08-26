@@ -269,7 +269,26 @@ class BasicsDeploy extends Controller
         }
         return $this->error('','操作失败');
     }
-
+    /**
+     * @Author pizepei
+     * @Created 2019/8/25 22:40
+     * @param \pizepei\staging\Request $Request
+     *      path [object] 添加的数据
+     *          id [uuid] id
+     * @title  获取主机分组
+     * @explain 获取主机分组列表
+     * @throws \Exception
+     * @return array [json]
+     *      data [raw]
+     * @router delete server/group-list/:id[uuid]
+     */
+    public function deleteDeployServerGroup(Request $Request)
+    {
+        if (DeployServerGroupModel::table()->del(['id'=>$Request->path('id')])){
+            return $this->succeed('','删除成功');
+        }
+        return $this->error('','操作失败');
+    }
 
     /**
      * @Author pizepei
@@ -277,8 +296,8 @@ class BasicsDeploy extends Controller
      * @param \pizepei\staging\Request $Request
      *      path [object] 添加的数据
      *          groupid [uuid] 分组id
-     * @title  获取主机分组
-     * @explain 获取主机分组列表
+     * @title  删除主机分组
+     * @explain 删除主机分组（如果非组下有主机就不让）
      * @throws \Exception
      * @return array [json]
      *      data [raw]
@@ -352,8 +371,8 @@ class BasicsDeploy extends Controller
      *          os_versions [string] 服务器系统版本
      *          operation [string] 环境参数
      *          period [string] 期限
-     * @title  获取主机分组
-     * @explain 获取主机分组列表
+     * @title  获取主机
+     * @explain 获取主机列表
      * @throws \Exception
      * @return array [json]
      *      data [raw]
@@ -366,5 +385,31 @@ class BasicsDeploy extends Controller
         }
         return $this->error('','操作失败');
     }
+
+
+
+
+    /**
+     * @Author pizepei
+     * @Created 2019/8/25 22:40
+     * @param \pizepei\staging\Request $Request
+     *      path [object] 数据
+     *          id [uuid] id
+     * @title  删除主机
+     * @explain 删除主机
+     * @throws \Exception
+     * @return array [json]
+     *      data [raw]
+     * @router delete server/host/:id[uuid]
+     */
+    public function deleteDeployServerConfig(Request $Request)
+    {
+        if (DeployServerConfigModel::table()->del(['id'=>$Request->path('id')])){
+            return $this->succeed('','删除成功');
+        }
+        return $this->error('','操作失败');
+    }
+
+
 
 }
