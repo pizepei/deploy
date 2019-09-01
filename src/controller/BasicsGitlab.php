@@ -74,19 +74,40 @@ class BasicsGitlab extends Controller
         $service = new BasicsGitlabService();
         return $this->succeed( $service->apiRequest('groups'));
     }
+    /**
+     * @return array [json]
+     *      data [raw]
+     * @title  群组列表
+     * @explain 建议生产发布新版本时执行
+     * @router get groups-projects-list
+     * @throws \Exception
+     */
+    public function groupsProjectsList()
+    {
+        $service = new BasicsGitlabService();
+        $groups = $service->apiRequest('groups');
+        if (empty($groups['list'])){
+            return $this->succeed($groups,'获取成功');
+        }
+        #通过分组获取 项目列表
+        foreach ($groups['list'] as $key=>&$value){
+            $value['lits'] = $service->apiRequest('groups/'.$value['id'].'/projects')['list']??[];
+        }
+        return $this->succeed($groups,'获取成功');
 
+    }
     /**
      * @param \pizepei\staging\Request $Request
      *      path [object] 路径参数
      *           id [int] 群组id
      * @return array [json]
      *      data [raw]
-     * @title  群组列表
+     * @title  群组下项目列表
      * @explain 建议生产发布新版本时执行
      * @router get groups/:id[int]/projects
      * @throws \Exception
      */
-    public function groupsProjectsList(Request $Request)
+    public function groupsProjectsInfo(Request $Request)
     {
         $service = new BasicsGitlabService();
         return $this->succeed( $service->apiRequest('groups/'.$Request->path('id').'/projects'));
