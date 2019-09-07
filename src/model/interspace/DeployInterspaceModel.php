@@ -1,12 +1,9 @@
 <?php
 /**
  * 部署空间表
- * 客户-》产品-》服务
+ * 空间>系统>微服务
  */
-
-
-namespace pizepei\deploy\model;
-
+namespace pizepei\deploy\model\interspace;
 
 use pizepei\model\db\Model;
 
@@ -20,11 +17,14 @@ class DeployInterspaceModel extends Model
         'id'=>[
             'TYPE'=>'uuid','COMMENT'=>'主键uuid','DEFAULT'=>false,
         ],
-        'name'=>[
-            'TYPE'=>'varchar(128)', 'DEFAULT'=>'', 'COMMENT'=>'空间简称',
+        'code'=>[
+            'TYPE'=>'varchar(128)', 'DEFAULT'=>false, 'COMMENT'=>'空间标识字母和数字',
         ],
-        'type'=>[
-            'TYPE'=>'varchar(128)', 'DEFAULT'=>false, 'COMMENT'=>'自定义分类标签',
+        'name'=>[
+            'TYPE'=>'varchar(128)', 'DEFAULT'=>false, 'COMMENT'=>'空间简称',
+        ],
+        'label'=>[
+            'TYPE'=>'varchar(128)', 'DEFAULT'=>'', 'COMMENT'=>'自定义分类标签',
         ],
         'phone'=>[
             'TYPE'=>'varchar(20)', 'DEFAULT'=>'', 'COMMENT'=>'联系电话',
@@ -41,6 +41,12 @@ class DeployInterspaceModel extends Model
         'remark'=>[
             'TYPE'=>"varchar(500)", 'DEFAULT'=>'', 'COMMENT'=>'备注',
         ],
+        'config'=>[
+            'TYPE'=>'json', 'DEFAULT'=>false, 'COMMENT'=>'配置',
+        ],
+        'config_template'=>[
+            'TYPE'=>'json', 'DEFAULT'=>false, 'COMMENT'=>'配置模板',
+        ],
         'status'=>[
             'TYPE'=>"ENUM('1','2','3','4','5')", 'DEFAULT'=>'1', 'COMMENT'=>'1停用2、正常3、维护4、等待5、异常',
         ],
@@ -48,10 +54,8 @@ class DeployInterspaceModel extends Model
             'TYPE'=>'json', 'DEFAULT'=>false, 'COMMENT'=>'拓展',
         ],
         'INDEX'=>[
-            ['TYPE'=>'UNIQUE','FIELD'=>'gitlab_id','NAME'=>'gitlab_id','USING'=>'BTREE','COMMENT'=>'gitlabId'],
-            ['TYPE'=>'UNIQUE','FIELD'=>'gitlab_account','NAME'=>'gitlab_account','USING'=>'BTREE','COMMENT'=>'一般是邮箱'],
-            ['TYPE'=>'UNIQUE','FIELD'=>'account_id','NAME'=>'account_id','USING'=>'BTREE','COMMENT'=>'account_id'],
-            ['TYPE'=>'UNIQUE','FIELD'=>'account_id,gitlab_account,gitlab_id','NAME'=>'account_id,gitlab_account,gitlab_id','USING'=>'BTREE','COMMENT'=>'做UNIQUE'],
+            ['TYPE'=>'UNIQUE','FIELD'=>'name','NAME'=>'code','USING'=>'BTREE','COMMENT'=>'空间标识'],
+            ['TYPE'=>'UNIQUE','FIELD'=>'code','NAME'=>'name','USING'=>'BTREE','COMMENT'=>'空间简称'],
         ],
         'PRIMARY'=>'id',//主键
     ];

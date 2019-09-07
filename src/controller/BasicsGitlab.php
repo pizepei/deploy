@@ -112,7 +112,22 @@ class BasicsGitlab extends Controller
         $service = new BasicsGitlabService();
         return $this->succeed( $service->apiRequest('groups/'.$Request->path('id').'/projects'));
     }
+    /**
+     * @param \pizepei\staging\Request $Request
+     *      path [object] 路径参数
+     *           id [int] 群组id
+     * @return array [json]
+     *      data [raw]
+     * @title  群组下项目列表
+     * @explain 建议生产发布新版本时执行
+     * @router get oauth
+     * @throws \Exception
+     */
+    public function oauth(Request $Request)
+    {
 
 
+//        http://localhost:3000/oauth/authorize?client_id=APP_ID&redirect_uri=REDIRECT_URI&response_type=code
+    }
 
 }

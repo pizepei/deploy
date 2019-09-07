@@ -128,6 +128,13 @@ class BasicsDeploy extends Controller
     }
 
     /**
+     * 皮皮虾
+     */
+    const __TEST__ = ['SSS'];
+
+
+
+    /**
      * @Author pizepei
      * @Created 2019/6/16 22:43
      * @param \pizepei\staging\Request $Request
@@ -136,11 +143,26 @@ class BasicsDeploy extends Controller
      * @throws \Exception
      * @title  gitlab System hooks
      * @explain System hooks
+     * @baseAuth UserAuth:public
      * @router get test
      */
     public function test(Request $Request)
     {
-        return $this->view('ace');
+
+
+        $reflect = new \ReflectionClass('pizepei\config\Config');
+        $reflect = new \ReflectionClass('pizepei\deploy\controller\BasicsDeploy');
+
+//        foreach ($reflect->getConstants() as $key=>$value){
+//            var_dump($reflect->getConstant($key));
+////            var_dump($key->getDocComment());
+//        }
+
+        return $reflect->getConstructor();
+
+
+
+//        return $this->view('ace');
         /**
          * MicroServiceConfigCenterModel
          */
