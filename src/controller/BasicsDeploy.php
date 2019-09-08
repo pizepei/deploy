@@ -5,11 +5,13 @@
  */
 namespace pizepei\deploy\controller;
 
+use pizepei\basics\model\account\AccountModel;
 use pizepei\deploy\DeployService;
 use pizepei\deploy\LocalDeployServic;
 use pizepei\deploy\model\DeployServerConfigModel;
 use pizepei\deploy\model\DeployServerGroupModel;
 use pizepei\deploy\model\DeployServerRelevanceModel;
+use pizepei\deploy\service\BasicDeploySerice;
 use pizepei\model\db\Model;
 use pizepei\model\db\TableAlterLogModel;
 use pizepei\staging\Controller;
@@ -431,7 +433,38 @@ class BasicsDeploy extends Controller
         }
         return $this->error('','操作失败');
     }
+    /**
+     * @Author pizepei
+     * @Created 2019/8/25 22:40
+     * @param \pizepei\staging\Request $Request
+     * @title  部署空间列表
+     * @explain 部署空间列表
+     * @throws \Exception
+     * @return array [json]
+     *      data [raw]
+     * @router get interspace-list
+     */
+    public function getDeployInterspaceList(Request $Request)
+    {
+        $accounId = AccountModel::table()->forceIndex(['number'])->where(['number'=>$this->Payload['number']])->fetch(['id']);
+        return $this->succeed(['list'=>BasicDeploySerice::getInterspacelist($accounId['id'])],'获取成功');
+    }
+    /**
+     * @Author pizepei
+     * @Created 2019/8/25 22:40
+     * @param \pizepei\staging\Request $Request
+     * @title  获取用户列表
+     * @explain 获取用户列表（穿梭框使用）
+     * @throws \Exception
+     * @return array [json]
+     *      data [raw]
+     * @router get account/ltransfer-list
+     */
+    public function getAccountLtransferIst(Request $Request)
+    {
+        $accounId = AccountModel::table()->forceIndex(['number'])->where(['number'=>$this->Payload['number']])->fetch(['id']);
 
-
+        return $this->succeed(BasicDeploySerice::getAccountLtransferIst([$accounId['id']]),'获取成功');
+    }
 
 }

@@ -18,7 +18,7 @@ class DeployInterspaceModel extends Model
             'TYPE'=>'uuid','COMMENT'=>'主键uuid','DEFAULT'=>false,
         ],
         'code'=>[
-            'TYPE'=>'varchar(128)', 'DEFAULT'=>false, 'COMMENT'=>'空间标识字母和数字',
+            'TYPE'=>'varchar(128)', 'DEFAULT'=>false, 'COMMENT'=>'随机生成空间标识字母和数字',
         ],
         'name'=>[
             'TYPE'=>'varchar(128)', 'DEFAULT'=>false, 'COMMENT'=>'空间简称',
@@ -39,13 +39,22 @@ class DeployInterspaceModel extends Model
             'TYPE'=>"varchar(500)", 'DEFAULT'=>'', 'COMMENT'=>'联系人',
         ],
         'remark'=>[
-            'TYPE'=>"varchar(500)", 'DEFAULT'=>'', 'COMMENT'=>'备注',
+            'TYPE'=>"varchar(1000)", 'DEFAULT'=>'', 'COMMENT'=>'备注',
         ],
         'config'=>[
             'TYPE'=>'json', 'DEFAULT'=>false, 'COMMENT'=>'配置',
         ],
         'config_template'=>[
             'TYPE'=>'json', 'DEFAULT'=>false, 'COMMENT'=>'配置模板',
+        ],
+        'owner'=>[
+            'TYPE'=>'uuid', 'DEFAULT'=>false, 'COMMENT'=>'所有者账号uuid', 'COMMENT'=>'一般是创建者，在创建者离职后可更换其他人',
+        ],
+        'maintainer'=>[
+            'TYPE'=>'json', 'DEFAULT'=>false, 'COMMENT'=>'维护人员账号uuid',
+        ],
+        'authority'=>[
+            'TYPE'=>"ENUM('public','protected','private')", 'DEFAULT'=>'public', 'COMMENT'=>'空间权限','EXPLAIN'=>'public所有人都可以操作、protected使用DeployAuthority表判断权限、private私人的只有owner才可以操作',
         ],
         'status'=>[
             'TYPE'=>"ENUM('1','2','3','4','5')", 'DEFAULT'=>'1', 'COMMENT'=>'1停用2、正常3、维护4、等待5、异常',
@@ -62,7 +71,7 @@ class DeployInterspaceModel extends Model
     /**
      * @var string 表备注（不可包含@版本号关键字）
      */
-    protected $table_comment = '部署空间';
+    protected $table_comment = '部署空间表';
     /**
      * @var int 表版本（用来记录表结构版本）在表备注后面@$table_version
      */
