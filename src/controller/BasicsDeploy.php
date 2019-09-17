@@ -216,6 +216,7 @@ class BasicsDeploy extends Controller
      * @title  获取项目配置接口
      * @explain 获取项目配置接口（基础配置）。
      * @throws \Exception
+     * @baseAuth UserAuth:public
      * @return array [json]
      *      data [raw]
      * @router post service-config/:appid[string]
