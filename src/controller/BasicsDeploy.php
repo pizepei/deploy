@@ -70,10 +70,10 @@ class BasicsDeploy extends Controller
          * 如 ../   ./
          */
         if(strpos($path,'..'.DIRECTORY_SEPARATOR) === 0 || strpos($path,'..'.DIRECTORY_SEPARATOR) > 0 ){
-            return $this->error([],'非法目录');
+            return $this->error('非法目录');
         }
         if(strpos($path,'.'.DIRECTORY_SEPARATOR) === 0 || strpos($path,'.'.DIRECTORY_SEPARATOR) > 0 ){
-            return $this->error([],'非法目录');
+            return $this->error('非法目录');
         }
         if($path ==='runtime')
         {
@@ -266,7 +266,7 @@ class BasicsDeploy extends Controller
         if (DeployServerGroupModel::table()->add($Request->post())){
             return $this->succeed('','添加成功');
         }
-        return $this->error('','操作失败');
+        return $this->error('操作失败');
     }
 
 
@@ -292,7 +292,7 @@ class BasicsDeploy extends Controller
         if (DeployServerGroupModel::table()->where(['id'=>$Request->raw('id')])->update($Request->raw())){
             return $this->succeed('','修改成功');
         }
-        return $this->error('','操作失败');
+        return $this->error('操作失败');
     }
     /**
      * @Author pizepei
@@ -312,7 +312,7 @@ class BasicsDeploy extends Controller
         if (DeployServerGroupModel::table()->del(['id'=>$Request->path('id')])){
             return $this->succeed('','删除成功');
         }
-        return $this->error('','操作失败');
+        return $this->error('操作失败');
     }
 
     /**
@@ -372,7 +372,7 @@ class BasicsDeploy extends Controller
             return $this->succeed('','操作成功');
 
         }
-        return $this->error('','操作失败');
+        return $this->error('操作失败');
     }
     /**
      * @Author pizepei
@@ -408,7 +408,7 @@ class BasicsDeploy extends Controller
         if (DeployServerConfigModel::table()->where(['id'=>$Request->path('id')])->update($Request->raw())){
             return $this->succeed('','修改成功');
         }
-        return $this->error('','操作失败');
+        return $this->error('操作失败');
     }
 
 
@@ -432,7 +432,7 @@ class BasicsDeploy extends Controller
         if (DeployServerConfigModel::table()->del(['id'=>$Request->path('id')])){
             return $this->succeed('','删除成功');
         }
-        return $this->error('','操作失败');
+        return $this->error('操作失败');
     }
     /**
      * @Author pizepei
