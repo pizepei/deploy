@@ -216,4 +216,60 @@ class LocalDeployServic
 
     }
 
+    /**
+     * @Author 皮泽培
+     * @Created 2019/11/13 17:26
+     * @return array [json] 定义输出返回数据
+
+     * @title  控制器初始化
+     * @explain 读取符合条件的控制器依赖
+     * @throws \Exception
+     */
+    public static function cliInitDeploy()
+    {
+        # 控制器初始化
+        Helper()->getFilePathData('..'.DIRECTORY_SEPARATOR.'vendor',$pathData,'.php','namespaceControllerPath.ini');
+        $path = [];
+        foreach($pathData as &$value){
+            var_dump($value);
+
+            # 清除../   替换  /  \  .php  和src
+            $baseControl = str_replace(['.php','/','..\\','../'],['','\\','',''],$value);
+            var_dump($baseControl);
+
+//            * @baseControl pizepei\basics\src\controller\BasicsAccount
+
+            $use_namespace = str_replace(['.php','/','..'.DIRECTORY_SEPARATOR,DIRECTORY_SEPARATOR.'src'.DIRECTORY_SEPARATOR],['',"\\",'','\\'],$value);
+//            var_dump($namespace::CONTROLLER_INFO);
+            $namespace::getBasicsPath();
+//            echo $value = str_replace('.php','',str_replace('/',"\\",str_replace('..'.DIRECTORY_SEPARATOR,'',$value)));
+        }
+//        var_dump($pathData);
+
+    }
+    const CONTROLLER_INFO = <<<NEO
+<?php
+/**
+ * Created by PhpStorm.
+ * User: pizepei
+ * Date: 2019/1/15
+ * Time: 11:28
+ * @baseControl {{baseControl}}
+ * @baseAuth {{baseAuth}}
+ * @title {{title}}
+ * @authGroup {{authGroup}}
+ * @basePath {{basePath}}
+ * @baseParam {{baseParam}}
+ */
+namespace {{namespace}};
+
+use {{use_namespace}};
+
+class {{className}} extends {{classBasicsName}}
+{
+
+}    
+NEO;
+
+
 }

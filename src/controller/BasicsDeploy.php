@@ -5,6 +5,8 @@
  */
 namespace pizepei\deploy\controller;
 
+use app\bases\Account;
+use pizepei\basics\controller\BasicsAccount;
 use pizepei\basics\model\account\AccountModel;
 use pizepei\deploy\DeployService;
 use pizepei\deploy\LocalDeployServic;
@@ -20,6 +22,24 @@ use ZipArchive;
 
 class BasicsDeploy extends Controller
 {
+
+    /**
+     * @param \pizepei\staging\Request $Request
+     *      path [object] 路径参数
+     *           id [string] path_id
+     *           name [string] path_id
+     * @return array [json]
+     * @title  命令行cli模式初始化项目
+     * @explain 命令行cli模式运行方式: php index_cli.php --route /dome/cli/001/pizpe(命令行模式请求参数请使用path方式)
+     * @baseAuth DeployAuth:public
+     * @router cli initDeploy
+     * @throws \Exception
+     */
+    public function cliInitDeploy(Request $Request)
+    {
+        LocalDeployServic::cliInitDeploy();
+    }
+
     /**
      * @param \pizepei\staging\Request $Request
      *      path [object] 路径参数
