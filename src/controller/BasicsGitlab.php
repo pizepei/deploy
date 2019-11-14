@@ -12,6 +12,22 @@ use pizepei\staging\Request;
 
 class BasicsGitlab extends Controller
 {
+
+    /**
+     * 基础控制器信息
+     */
+    const CONTROLLER_INFO = [
+        'User'=>'pizepei',
+        'title'=>'Gitlab控制器',//控制器标题
+        'className'=>'Gitlab',//门面控制器名称
+        'namespace'=>'app',//门面控制器命名空间
+        'baseAuth'=>'基础权限继承（加命名空间的类名称）',//基础权限继承（加命名空间的类名称）
+        'authGroup'=>'[user:用户相关,admin:管理员相关]',//[user:用户相关,admin:管理员相关] 权限组列表
+        'basePath'=>'/gitlab/',//基础路由
+        'baseParam'=>'[$Request:pizepei\staging\Request]',//依赖注入对象
+    ];
+
+
     /**
      * @param \pizepei\staging\Request $Request
      *      path [object] 路径参数

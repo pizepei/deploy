@@ -25,19 +25,18 @@ class BasicsDeploy extends Controller
 
     /**
      * @param \pizepei\staging\Request $Request
-     *      path [object] 路径参数
-     *           id [string] path_id
-     *           name [string] path_id
+     *      get [object] 参数
+     *           user [string required] 操作人
      * @return array [json]
      * @title  命令行cli模式初始化项目
-     * @explain 命令行cli模式运行方式: php index_cli.php --route /dome/cli/001/pizpe(命令行模式请求参数请使用path方式)
+     * @explainphp index_cli.php --route /deploy/initDeploy   --data user=pizepei   --domain oauth.heil.top
      * @baseAuth DeployAuth:public
      * @router cli initDeploy
      * @throws \Exception
      */
     public function cliInitDeploy(Request $Request)
     {
-        LocalDeployServic::cliInitDeploy();
+        LocalDeployServic::cliInitDeploy($Request->input());
     }
 
     /**

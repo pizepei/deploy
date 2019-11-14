@@ -225,7 +225,7 @@ class LocalDeployServic
      * @explain 读取符合条件的控制器依赖
      * @throws \Exception
      */
-    public static function cliInitDeploy()
+    public static function cliInitDeploy($param)
     {
         # 控制器初始化
         Helper()->getFilePathData('..'.DIRECTORY_SEPARATOR.'vendor',$pathData,'.php','namespaceControllerPath.ini');
@@ -241,6 +241,13 @@ class LocalDeployServic
             if (empty($controllerInfo['namespace'])|| empty($controllerInfo['basePath'])){
                 continue;
             }
+            # 基础控制器类名
+            $classBasicsExplode = explode('\\',$use_namespace);
+            $classBasicsName = end($classBasicsExplode);
+            # 判断是否有className
+            if(!isset($controllerInfo['className']) && empty($controllerInfo['className'])){
+                $controllerInfo['className'] = str_replace(['Basics'],[''],$classBasicsName);
+            }
             # 通过CONTROLLER_INFO['namespace']判断是否已经有门面控制器如果有就不重复参加（是否支持强制重新构建？）
                 # 1、判断是否已经存在
             $controllerInfoPath = str_replace(['\\'],[DIRECTORY_SEPARATOR],$controllerInfo['namespace']);
@@ -251,21 +258,17 @@ class LocalDeployServic
                 continue;
             }
             # 如果没有就按照CONTROLLER_INFO['namespace']写入对应的门面控制器文件类
-                # 1、准备数据
-
-            # 基础控制器类名
-            $classBasicsExplode = explode('\\',$use_namespace);
-            $classBasicsName = end($classBasicsExplode);
+            # 准备数据
             $data = [
-                'User'=>$controllerInfo['User'],#检查人
+                'User'=>$param['user']??$controllerInfo['User'],#检查人
                 'Date'=>date('Y-m-d'),
                 'Time'=>date('H:i:s'),
                 'baseControl'=>$baseControl,#继承的基础控制器
-                'baseAuth'=>$controllerInfo['baseAuth'],# 基础权限控制器
+                'baseAuth'=>$controllerInfo['baseAuth']??'基础权限继承（加命名空间的类名称）',# 基础权限控制器
                 'title'=>$controllerInfo['title'],# 路由标题
-                'authGroup'=>$controllerInfo['authGroup'],#权限分组
+                'authGroup'=>$controllerInfo['authGroup']??'[user:用户相关,admin:管理员相关]',#权限分组
                 'basePath'=>$controllerInfo['basePath'],#基础路由路径
-                'baseParam'=>$controllerInfo['baseParam'],# 依赖注入
+                'baseParam'=>$controllerInfo['baseParam']??'[$Request:pizepei\staging\Request]',# 依赖注入
                 'namespace'=>$controllerInfo['namespace'],# 命名空间
                 'use_namespace'=>$use_namespace,# 基础控制器的命名空间
                 'className' =>$controllerInfo['className'],
@@ -299,6 +302,9 @@ class LocalDeployServic
  * @basePath {{basePath}}
  * @baseParam {{baseParam}}
  */
+ 
+declare(strict_types=1);
+
 namespace {{namespace}};
 
 use {{use_namespace}};
