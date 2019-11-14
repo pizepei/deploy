@@ -49,8 +49,8 @@ class CustomerModel extends Model
         'INDEX'=>[
             ['TYPE'=>'UNIQUE','FIELD'=>'gitlab_id','NAME'=>'gitlab_id','USING'=>'BTREE','COMMENT'=>'gitlabId'],
             ['TYPE'=>'UNIQUE','FIELD'=>'gitlab_account','NAME'=>'gitlab_account','USING'=>'BTREE','COMMENT'=>'一般是邮箱'],
-            ['TYPE'=>'UNIQUE','FIELD'=>'account_id','NAME'=>'account_id','USING'=>'BTREE','COMMENT'=>'account_id'],
-            ['TYPE'=>'UNIQUE','FIELD'=>'account_id,gitlab_account,gitlab_id','NAME'=>'account_id,gitlab_account,gitlab_id','USING'=>'BTREE','COMMENT'=>'做UNIQUE'],
+//            ['TYPE'=>'UNIQUE','FIELD'=>'account_id','NAME'=>'account_id','USING'=>'BTREE','COMMENT'=>'account_id'],
+//            ['TYPE'=>'UNIQUE','FIELD'=>'account_id,gitlab_account,gitlab_id','NAME'=>'account_id,gitlab_account,gitlab_id','USING'=>'BTREE','COMMENT'=>'做UNIQUE'],
         ],
         'PRIMARY'=>'id',//主键
     ];
