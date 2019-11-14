@@ -16,6 +16,7 @@ use pizepei\encryption\aes\Prpcrypt;
 use pizepei\encryption\SHA1;
 use pizepei\func\Func;
 use pizepei\helper\Helper;
+use pizepei\staging\App;
 use pizepei\terminalInfo\TerminalInfo;
 
 class LocalDeployServic
@@ -218,19 +219,19 @@ class LocalDeployServic
 
     /**
      * @Author 皮泽培
-     * @Created 2019/11/13 17:26
-     * @return array [json] 定义输出返回数据
-
+     * @Created 2019/11/14 16:13
+     * @param App $App
+     * @param $param
      * @title  控制器初始化
-     * @explain 读取符合条件的控制器依赖
      * @throws \Exception
      */
-    public static function cliInitDeploy($param)
+    public static function cliInitDeploy(App $App,$param)
     {
         # 控制器初始化
         Helper()->getFilePathData('..'.DIRECTORY_SEPARATOR.'vendor',$pathData,'.php','namespaceControllerPath.ini');
         $path = [];
         foreach($pathData as &$value){
+
             # 清除../   替换  /  \  .php  和src  获取基础控制器的路径地址
             $baseControl = str_replace(['.php','/','..\\','../'],['','\\','',''],$value);
             # 获取基础控制器的命名空间信息
@@ -238,7 +239,7 @@ class LocalDeployServic
             # 获取基础控制器的信息
             $controllerInfo = $use_namespace::CONTROLLER_INFO;
             # 通过 CONTROLLER_INFO['namespace'] 和 CONTROLLER_INFO['basePath'] 确定是否是有效的基础控制器信息
-            if (empty($controllerInfo['namespace'])|| empty($controllerInfo['basePath'])){
+            if (empty($controllerInfo['basePath']) || empty($controllerInfo['title'])){
                 continue;
             }
             # 基础控制器类名
@@ -248,6 +249,9 @@ class LocalDeployServic
             if(!isset($controllerInfo['className']) && empty($controllerInfo['className'])){
                 $controllerInfo['className'] = str_replace(['Basics'],[''],$classBasicsName);
             }
+            # 由于由于命名空间不确定是否是app 所以参数来获取拼接
+            $controllerInfo['namespace'] = $controllerInfo['namespace'] ==''?$App->__APP__:$App->__APP__.'\\'.$controllerInfo['namespace'];
+
             # 通过CONTROLLER_INFO['namespace']判断是否已经有门面控制器如果有就不重复参加（是否支持强制重新构建？）
                 # 1、判断是否已经存在
             $controllerInfoPath = str_replace(['\\'],[DIRECTORY_SEPARATOR],$controllerInfo['namespace']);
@@ -264,7 +268,7 @@ class LocalDeployServic
                 'Date'=>date('Y-m-d'),
                 'Time'=>date('H:i:s'),
                 'baseControl'=>$baseControl,#继承的基础控制器
-                'baseAuth'=>$controllerInfo['baseAuth']??'基础权限继承（加命名空间的类名称）',# 基础权限控制器
+                'baseAuth'=>$controllerInfo['baseAuth']??'Resource:public',# 基础权限控制器
                 'title'=>$controllerInfo['title'],# 路由标题
                 'authGroup'=>$controllerInfo['authGroup']??'[user:用户相关,admin:管理员相关]',#权限分组
                 'basePath'=>$controllerInfo['basePath'],#基础路由路径

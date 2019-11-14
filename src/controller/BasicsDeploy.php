@@ -16,6 +16,7 @@ use pizepei\deploy\model\DeployServerRelevanceModel;
 use pizepei\deploy\service\BasicDeploySerice;
 use pizepei\model\db\Model;
 use pizepei\model\db\TableAlterLogModel;
+use pizepei\staging\App;
 use pizepei\staging\Controller;
 use pizepei\staging\Request;
 use ZipArchive;
@@ -36,7 +37,7 @@ class BasicsDeploy extends Controller
      */
     public function cliInitDeploy(Request $Request)
     {
-        LocalDeployServic::cliInitDeploy($Request->input());
+        LocalDeployServic::cliInitDeploy($this->app,$Request->input());
     }
 
     /**

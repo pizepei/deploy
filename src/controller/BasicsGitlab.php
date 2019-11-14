@@ -20,7 +20,7 @@ class BasicsGitlab extends Controller
         'User'=>'pizepei',
         'title'=>'Gitlab控制器',//控制器标题
         'className'=>'Gitlab',//门面控制器名称
-        'namespace'=>'app',//门面控制器命名空间
+        'namespace'=>'',//门面控制器命名空间
         'baseAuth'=>'基础权限继承（加命名空间的类名称）',//基础权限继承（加命名空间的类名称）
         'authGroup'=>'[user:用户相关,admin:管理员相关]',//[user:用户相关,admin:管理员相关] 权限组列表
         'basePath'=>'/gitlab/',//基础路由
