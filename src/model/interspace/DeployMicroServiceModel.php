@@ -7,7 +7,9 @@
 namespace pizepei\deploy\model\interspace;
 
 
-class DeployMicroServiceModel
+use pizepei\model\db\Model;
+
+class DeployMicroServiceModel extends Model
 {
 
 }

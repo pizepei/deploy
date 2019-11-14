@@ -7,7 +7,9 @@
 namespace pizepei\deploy\model;
 
 
-class CustomerModel
+use pizepei\model\db\Model;
+
+class CustomerModel extends Model
 {
     /**
      * 表结构

@@ -8,6 +8,7 @@ namespace pizepei\deploy\controller;
 use app\bases\Account;
 use pizepei\basics\controller\BasicsAccount;
 use pizepei\basics\model\account\AccountModel;
+use pizepei\basics\service\account\BasicsAccountService;
 use pizepei\deploy\DeployService;
 use pizepei\deploy\LocalDeployServic;
 use pizepei\deploy\model\DeployServerConfigModel;
@@ -23,7 +24,15 @@ use ZipArchive;
 
 class BasicsDeploy extends Controller
 {
-
+    /**
+     * 基础控制器信息
+     */
+    const CONTROLLER_INFO = [
+        'User'=>'pizepei',
+        'title'=>'部署控制器',//控制器标题
+        'namespace'=>'',//门面控制器命名空间
+        'basePath'=>'/deploy/',//基础路由
+    ];
     /**
      * @param \pizepei\staging\Request $Request
      *      get [object] 参数
@@ -47,6 +56,7 @@ class BasicsDeploy extends Controller
      * @return array [json]
      * @title  同步所有model的结构
      * @explain 建议生产发布新版本时执行
+     * @baseAuth DeployAuth:public
      * @router get cliDbInitStructure
      * @throws \Exception
      */

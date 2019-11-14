@@ -6,7 +6,9 @@
 namespace pizepei\deploy\model\interspace;
 
 
-class DeployAuthorityModel
+use pizepei\model\db\Model;
+
+class DeployAuthorityModel extends Model
 {
     /**
      * 表结构
