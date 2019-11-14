@@ -231,29 +231,67 @@ class LocalDeployServic
         Helper()->getFilePathData('..'.DIRECTORY_SEPARATOR.'vendor',$pathData,'.php','namespaceControllerPath.ini');
         $path = [];
         foreach($pathData as &$value){
-            var_dump($value);
-
-            # 清除../   替换  /  \  .php  和src
+            # 清除../   替换  /  \  .php  和src  获取基础控制器的路径地址
             $baseControl = str_replace(['.php','/','..\\','../'],['','\\','',''],$value);
-            var_dump($baseControl);
-
-//            * @baseControl pizepei\basics\src\controller\BasicsAccount
-
+            # 获取基础控制器的命名空间信息
             $use_namespace = str_replace(['.php','/','..'.DIRECTORY_SEPARATOR,DIRECTORY_SEPARATOR.'src'.DIRECTORY_SEPARATOR],['',"\\",'','\\'],$value);
-//            var_dump($namespace::CONTROLLER_INFO);
-            $namespace::getBasicsPath();
-//            echo $value = str_replace('.php','',str_replace('/',"\\",str_replace('..'.DIRECTORY_SEPARATOR,'',$value)));
+            # 获取基础控制器的信息
+            $controllerInfo = $use_namespace::CONTROLLER_INFO;
+            # 通过 CONTROLLER_INFO['namespace'] 和 CONTROLLER_INFO['basePath'] 确定是否是有效的基础控制器信息
+            if (empty($controllerInfo['namespace'])|| empty($controllerInfo['basePath'])){
+                continue;
+            }
+            # 通过CONTROLLER_INFO['namespace']判断是否已经有门面控制器如果有就不重复参加（是否支持强制重新构建？）
+                # 1、判断是否已经存在
+            $controllerInfoPath = str_replace(['\\'],[DIRECTORY_SEPARATOR],$controllerInfo['namespace']);
+            $controllerPath = '..'.DIRECTORY_SEPARATOR.$controllerInfoPath.DIRECTORY_SEPARATOR.$controllerInfo['className'].'.php';
+            $controllerDir = '..'.DIRECTORY_SEPARATOR.$controllerInfoPath.DIRECTORY_SEPARATOR;
+            if (file_exists($controllerPath)){
+                # 文件存在跳过
+                continue;
+            }
+            # 如果没有就按照CONTROLLER_INFO['namespace']写入对应的门面控制器文件类
+                # 1、准备数据
+
+            # 基础控制器类名
+            $classBasicsExplode = explode('\\',$use_namespace);
+            $classBasicsName = end($classBasicsExplode);
+            $data = [
+                'User'=>$controllerInfo['User'],#检查人
+                'Date'=>date('Y-m-d'),
+                'Time'=>date('H:i:s'),
+                'baseControl'=>$baseControl,#继承的基础控制器
+                'baseAuth'=>$controllerInfo['baseAuth'],# 基础权限控制器
+                'title'=>$controllerInfo['title'],# 路由标题
+                'authGroup'=>$controllerInfo['authGroup'],#权限分组
+                'basePath'=>$controllerInfo['basePath'],#基础路由路径
+                'baseParam'=>$controllerInfo['baseParam'],# 依赖注入
+                'namespace'=>$controllerInfo['namespace'],# 命名空间
+                'use_namespace'=>$use_namespace,# 基础控制器的命名空间
+                'className' =>$controllerInfo['className'],
+                'classBasicsName'=>$classBasicsName,
+            ];
+            # 创建目录
+            Helper()->file()->createDir($controllerDir,644);
+            # 使用数据对模板进行替换
+            $template = self::CONTROLLER_TEMPLATE;
+            Helper()->str()->str_replace($data,$template);
+            # 写入文件
+            file_put_contents($controllerPath,$template);
         }
-//        var_dump($pathData);
 
     }
-    const CONTROLLER_INFO = <<<NEO
+
+    /**
+     * 统一的控制器文件模板
+     */
+    const CONTROLLER_TEMPLATE = <<<NEO
 <?php
 /**
  * Created by PhpStorm.
- * User: pizepei
- * Date: 2019/1/15
- * Time: 11:28
+ * User: {{User}}
+ * Date: {{Date}}
+ * Time: {{Time}}
  * @baseControl {{baseControl}}
  * @baseAuth {{baseAuth}}
  * @title {{title}}
@@ -268,7 +306,9 @@ use {{use_namespace}};
 class {{className}} extends {{classBasicsName}}
 {
 
-}    
+}
+
+    
 NEO;
 
 
