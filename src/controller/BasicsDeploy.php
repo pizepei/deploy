@@ -180,7 +180,9 @@ class BasicsDeploy extends Controller
      */
     public function test(Request $Request)
     {
+        # 尝试连接vps
 
+        # 尝试进行构建  git  composer
 
         $reflect = new \ReflectionClass('pizepei\config\Config');
         $reflect = new \ReflectionClass('pizepei\deploy\controller\BasicsDeploy');
