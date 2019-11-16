@@ -227,15 +227,33 @@ class LocalDeployServic
      */
     public static function cliInitDeploy(App $App,$param)
     {
-        # 控制器初始化
-        Helper()->getFilePathData('..'.DIRECTORY_SEPARATOR.'vendor',$pathData,'.php','namespaceControllerPath.ini');
+        # 获取控制器文件路径
+        Helper()->getFilePathData('..'.DIRECTORY_SEPARATOR.'vendor',$pathData,'.php','namespaceControllerPath.json');
         $path = [];
+        $permissions = [];
         foreach($pathData as &$value){
+            # 处理包信息
+            $packageInfo = json_decode($value['packageInfo'],true);
+            $packageName = $packageInfo['name'];
+            $packageAuthor = $packageInfo['author'];
+
+            # 基础许可证权限注册（每个包都可注册一个或者多个）但是不可重复
+            $basePermissions = '';
+            foreach ($packageInfo['permissions'] as $psk=>$pvalue){
+
+                if (isset($permissions[$psk]) && $permissions[$psk]['packageName'] !==$packageName){
+                    echo PHP_EOL.'基础许可证权限注册冲突'.PHP_EOL."apth:".$value.PHP_EOL."permissions:".$psk.PHP_EOL."source:".$permissions[$psk].PHP_EOL;
+                    continue;
+                }
+                $permissions[$psk] = ['packageName'=>$packageName,'name'=>$pvalue];
+                $basePermissions .= $psk.':'.$pvalue.',';
+            }
+            $basePermissions = rtrim($basePermissions,',');
 
             # 清除../   替换  /  \  .php  和src  获取基础控制器的路径地址
-            $baseControl = str_replace(['.php','/','..\\','../'],['','\\','',''],$value);
+            $baseControl = str_replace(['.php','/','..\\','../'],['','\\','',''],$value['path']);
             # 获取基础控制器的命名空间信息
-            $use_namespace = str_replace(['.php','/','..'.DIRECTORY_SEPARATOR,DIRECTORY_SEPARATOR.'src'.DIRECTORY_SEPARATOR],['',"\\",'','\\'],$value);
+            $use_namespace = str_replace(['.php','/','..'.DIRECTORY_SEPARATOR,DIRECTORY_SEPARATOR.'src'.DIRECTORY_SEPARATOR],['',"\\",'','\\'],$value['path']);
             # 获取基础控制器的信息
             $controllerInfo = $use_namespace::CONTROLLER_INFO;
             # 通过 CONTROLLER_INFO['namespace'] 和 CONTROLLER_INFO['basePath'] 确定是否是有效的基础控制器信息
@@ -277,6 +295,10 @@ class LocalDeployServic
                 'use_namespace'=>$use_namespace,# 基础控制器的命名空间
                 'className' =>$controllerInfo['className'],
                 'classBasicsName'=>$classBasicsName,
+                # 包信息
+                'basePermissions'=>$basePermissions,
+                'packageName'=>$packageName,
+                'packageAuthor'=>$packageAuthor,
             ];
             # 创建目录
             Helper()->file()->createDir($controllerDir,644);
@@ -286,6 +308,11 @@ class LocalDeployServic
             # 写入文件
             file_put_contents($controllerPath,$template);
         }
+//        file_put_contents($controllerPath,$template);
+        # 写入权限文件$permissions
+        $App->InitializeConfig()->set_config('Permissions',['DATA'=>$permissions],$App->__DEPLOY_CONFIG_PATH__.DIRECTORY_SEPARATOR.$App->__APP__.DIRECTORY_SEPARATOR,'','权限集合');
+
+//        var_dump($permissions);
 
     }
 
@@ -299,12 +326,14 @@ class LocalDeployServic
  * User: {{User}}
  * Date: {{Date}}
  * Time: {{Time}}
- * @baseControl {{baseControl}}
- * @baseAuth {{baseAuth}}
  * @title {{title}}
- * @authGroup {{authGroup}}
  * @basePath {{basePath}}
+ * @baseAuth {{baseAuth}}
+ * @basePermissions {{basePermissions}}
+ * @packageName {{packageName}}
+ * @packageAuthor {{packageAuthor}}
  * @baseParam {{baseParam}}
+ * @baseControl {{baseControl}}
  */
  
 declare(strict_types=1);

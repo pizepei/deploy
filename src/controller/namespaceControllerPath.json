@@ -1,0 +1,7 @@
+{
+  "name":"系统部署",
+  "author": "pizepei",
+  "permissions": {
+    "systemDeploy": "系统部署"
+  }
+}
