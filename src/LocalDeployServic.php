@@ -10,6 +10,7 @@
 namespace pizepei\deploy;
 
 
+use config\app\BaseAuthGroup;
 use GuzzleHttp\Client;
 use pizepei\deploy\model\MicroServiceConfigCenterModel;
 use pizepei\encryption\aes\Prpcrypt;
@@ -230,7 +231,7 @@ class LocalDeployServic
         # 获取控制器文件路径
         Helper()->getFilePathData('..'.DIRECTORY_SEPARATOR.'vendor',$pathData,'.php','namespaceControllerPath.json');
         $path = [];
-        $permissions = [];
+        $baseAuthGroup = [];
         foreach($pathData as &$value){
             # 处理包信息
             $packageInfo = json_decode($value['packageInfo'],true);
@@ -238,17 +239,18 @@ class LocalDeployServic
             $packageAuthor = $packageInfo['author'];
 
             # 基础许可证权限注册（每个包都可注册一个或者多个）但是不可重复
-            $basePermissions = '';
-            foreach ($packageInfo['permissions'] as $psk=>$pvalue){
-
-                if (isset($permissions[$psk]) && $permissions[$psk]['packageName'] !==$packageName){
-                    echo PHP_EOL.'基础许可证权限注册冲突'.PHP_EOL."apth:".$value.PHP_EOL."permissions:".$psk.PHP_EOL."source:".$permissions[$psk].PHP_EOL;
+            if (!is_array($packageInfo['baseAuthGroup'])) echo PHP_EOL.'baseAuthGroup 格式错误:'.$value['path'].PHP_EOL;
+            $baseAuthGroupStr = '';
+            foreach ($packageInfo['baseAuthGroup'] as $psk=>$pvalue){
+                if (isset($baseAuthGroup[$psk]) && $baseAuthGroup[$psk]['packageName'] !==$packageName){
+                    echo PHP_EOL.'基础许可证权限注册冲突'.PHP_EOL."apth:".$value['path'].PHP_EOL."baseAuthGroup:".$psk.PHP_EOL."source:".$baseAuthGroup[$psk]['name'].PHP_EOL;
                     continue;
                 }
-                $permissions[$psk] = ['packageName'=>$packageName,'name'=>$pvalue];
-                $basePermissions .= $psk.':'.$pvalue.',';
+                $pvalue['packageName'] = $packageName;
+                $baseAuthGroup[$psk] = $pvalue;
+                $baseAuthGroupStr .= $psk.':'.$pvalue['name'].',';
             }
-            $basePermissions = rtrim($basePermissions,',');
+            $baseAuthGroupStr = rtrim($baseAuthGroupStr,',');
 
             # 清除../   替换  /  \  .php  和src  获取基础控制器的路径地址
             $baseControl = str_replace(['.php','/','..\\','../'],['','\\','',''],$value['path']);
@@ -288,7 +290,7 @@ class LocalDeployServic
                 'baseControl'=>$baseControl,#继承的基础控制器
                 'baseAuth'=>$controllerInfo['baseAuth']??'Resource:public',# 基础权限控制器
                 'title'=>$controllerInfo['title'],# 路由标题
-                'authGroup'=>$controllerInfo['authGroup']??'[user:用户相关,admin:管理员相关]',#权限分组
+                'baseAuthGroup'=>$controllerInfo['baseAuthGroup']??$baseAuthGroupStr,#权限分组
                 'basePath'=>$controllerInfo['basePath'],#基础路由路径
                 'baseParam'=>$controllerInfo['baseParam']??'[$Request:pizepei\staging\Request]',# 依赖注入
                 'namespace'=>$controllerInfo['namespace'],# 命名空间
@@ -296,7 +298,7 @@ class LocalDeployServic
                 'className' =>$controllerInfo['className'],
                 'classBasicsName'=>$classBasicsName,
                 # 包信息
-                'basePermissions'=>$basePermissions,
+//                'basePermissions'=>$basePermissions,
                 'packageName'=>$packageName,
                 'packageAuthor'=>$packageAuthor,
             ];
@@ -310,9 +312,9 @@ class LocalDeployServic
         }
 //        file_put_contents($controllerPath,$template);
         # 写入权限文件$permissions
-        $App->InitializeConfig()->set_config('Permissions',['DATA'=>$permissions],$App->__DEPLOY_CONFIG_PATH__.DIRECTORY_SEPARATOR.$App->__APP__.DIRECTORY_SEPARATOR,'','权限集合');
+        $App->InitializeConfig()->set_config('BaseAuthGroup',['DATA'=>$baseAuthGroup],$App->__DEPLOY_CONFIG_PATH__.DIRECTORY_SEPARATOR.$App->__APP__.DIRECTORY_SEPARATOR,'config\\'.$App->__APP__,'基础权限集合');
 
-//        var_dump($permissions);
+//        var_dump(BaseAuthGroup::DATA);
 
     }
 
@@ -329,7 +331,7 @@ class LocalDeployServic
  * @title {{title}}
  * @basePath {{basePath}}
  * @baseAuth {{baseAuth}}
- * @basePermissions {{basePermissions}}
+ * @baseAuthGroup {{baseAuthGroup}}
  * @packageName {{packageName}}
  * @packageAuthor {{packageAuthor}}
  * @baseParam {{baseParam}}
