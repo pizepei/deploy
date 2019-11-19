@@ -7,7 +7,9 @@ namespace pizepei\deploy\controller;
 
 use app\bases\Account;
 use pizepei\basics\controller\BasicsAccount;
+use pizepei\basics\model\account\AccountAndRoleModel;
 use pizepei\basics\model\account\AccountModel;
+use pizepei\basics\model\account\AccountRoleModel;
 use pizepei\basics\service\account\BasicsAccountService;
 use pizepei\deploy\DeployService;
 use pizepei\deploy\LocalDeployServic;
@@ -15,8 +17,10 @@ use pizepei\deploy\model\DeployServerConfigModel;
 use pizepei\deploy\model\DeployServerGroupModel;
 use pizepei\deploy\model\DeployServerRelevanceModel;
 use pizepei\deploy\service\BasicDeploySerice;
+use pizepei\helper\Helper;
 use pizepei\model\db\Model;
 use pizepei\model\db\TableAlterLogModel;
+use pizepei\service\encryption\PasswordHash;
 use pizepei\staging\App;
 use pizepei\staging\Controller;
 use pizepei\staging\Request;
@@ -46,6 +50,7 @@ class BasicsDeploy extends Controller
      */
     public function cliInitDeploy(Request $Request)
     {
+        # 控制器初始化
         LocalDeployServic::cliInitDeploy($this->app,$Request->input());
     }
 
@@ -55,7 +60,7 @@ class BasicsDeploy extends Controller
      *           domain [string] 域名
      * @return array [json]
      * @title  同步所有model的结构
-     * @explain 建议生产发布新版本时执行
+     * @explain 建议生产发布新版本时执行，注意：如果账号表不存在会创建初始化的超级管理员账号
      * @baseAuth DeployAuth:public
      * @router get cliDbInitStructure
      * @throws \Exception
@@ -64,6 +69,45 @@ class BasicsDeploy extends Controller
     {
         # 命令行没事 saas
         $model = TableAlterLogModel::table();
+        # 同步表结构
+        $res = $model->initStructure('',true);
+        # 判断是否有账号信息 没有创建超级管理员
+        $accountData = AccountModel::table()->fetchAll();
+        if (!$accountData){# 创建超级管理员
+            $config = \Config::ACCOUNT;
+            # 实例化密码类
+            $PasswordHash = new PasswordHash();
+            //获取密码hash
+            $password_hash = $PasswordHash->password_hash('88888888',$config['algo'],$config['options']);
+            if(!empty($password_hash)){
+                $this->error('密码hash错误');
+            }
+            $Data['password_hash'] = $password_hash;
+
+            $AccountRes = AccountModel::table()->add(
+                $Data['number'] = 'Administrators_'.Helper::str()->int_rand($config['number_count']),//编号固定开头的账号编码(common,tourist,app,appAdmin,appSuperAdmin,Administrators)
+                $Data['phone'] = 18888888888,
+                $Data['email'] = '88888888@88.com',
+                $Data['type'] = 6,
+                $Data['logon_token_salt'] = Helper::str()->str_rand($config['user_logon_token_salt_count']),//建议user_logon_token_salt
+            );
+            if (empty($AccountRes) || !is_array($AccountRes)){
+                $this->error('创建超级管理员失败');
+            }
+            # 创建关联角色信息
+            $roleRes = AccountRoleModel::table()->add([
+                'name'=>'超级管理员',
+                'remark'=>'此超级管理员账号只在特殊情况时有超级权限',
+                'type'=>6,
+            ]);
+            # 角色
+            AccountAndRoleModel::table()->add(
+                [
+                    'role_id'=>key($roleRes),
+                    'account_id'=>key($AccountRes),
+                ]
+            );
+        }
         return $model->initStructure('',true);
     }
 
