@@ -89,7 +89,7 @@ class BasicsDeploy extends Controller
                 $Data['phone'] = 18888888888,
                 $Data['email'] = '88888888@88.com',
                 $Data['type'] = 6,
-                $Data['logon_token_salt'] = Helper::str()->str_rand($config['user_logon_token_salt_count']),//建议user_logon_token_salt
+                $Data['logon_token_salt'] = Helper::str()->str_rand($config['user_logon_token_salt_count'])//建议user_logon_token_salt
             );
             if (empty($AccountRes) || !is_array($AccountRes)){
                 $this->error('创建超级管理员失败');
