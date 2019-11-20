@@ -255,7 +255,7 @@ class LocalDeployServic
             # 清除../   替换  /  \  .php  和src  获取基础控制器的路径地址
             $baseControl = str_replace(['.php','/','..\\','../'],['','\\','',''],$value['path']);
             # 获取基础控制器的命名空间信息
-            $use_namespace = str_replace(['.php','/','..'.DIRECTORY_SEPARATOR,DIRECTORY_SEPARATOR.'src'.DIRECTORY_SEPARATOR],['',"\\",'','\\'],$value['path']);
+            $use_namespace = str_replace(['.php','/','..'.DIRECTORY_SEPARATOR,DIRECTORY_SEPARATOR.'src'.DIRECTORY_SEPARATOR,'..'],['',"\\",'','\\',''],$value['path']);
             # 获取基础控制器的信息
             $controllerInfo = $use_namespace::CONTROLLER_INFO;
             # 通过 CONTROLLER_INFO['namespace'] 和 CONTROLLER_INFO['basePath'] 确定是否是有效的基础控制器信息
