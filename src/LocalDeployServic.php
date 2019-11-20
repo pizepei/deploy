@@ -233,6 +233,7 @@ class LocalDeployServic
         $path = [];
         $baseAuthGroup = [];
         foreach($pathData as &$value){
+//            var_dump($value);
             # 处理包信息
             $packageInfo = json_decode($value['packageInfo'],true);
             $packageName = $packageInfo['name'];
@@ -255,7 +256,12 @@ class LocalDeployServic
             # 清除../   替换  /  \  .php  和src  获取基础控制器的路径地址
             $baseControl = str_replace(['.php','/','..\\','../'],['','\\','',''],$value['path']);
             # 获取基础控制器的命名空间信息
-            $use_namespace = str_replace(['.php','/','..'.DIRECTORY_SEPARATOR,DIRECTORY_SEPARATOR.'src'.DIRECTORY_SEPARATOR,'..'],['',"\\",'','\\',''],$value['path']);
+            if (DIRECTORY_SEPARATOR ==='/'){
+                $use_namespace = str_replace(['.php','/','..'.DIRECTORY_SEPARATOR,'src','..','\\\\'],['',"\\",'','','','\\'],$value['path']);
+            }else{
+                $use_namespace = str_replace(['.php','/','..'.DIRECTORY_SEPARATOR,DIRECTORY_SEPARATOR.'src'.DIRECTORY_SEPARATOR,'..'],['',"\\",'','\\',''],$value['path']);
+
+            }
             # 获取基础控制器的信息
             $controllerInfo = $use_namespace::CONTROLLER_INFO;
             # 通过 CONTROLLER_INFO['namespace'] 和 CONTROLLER_INFO['basePath'] 确定是否是有效的基础控制器信息
@@ -303,7 +309,7 @@ class LocalDeployServic
                 'packageAuthor'=>$packageAuthor,
             ];
             # 创建目录
-            Helper()->file()->createDir($controllerDir,644);
+            Helper()->file()->createDir($controllerDir);
             # 使用数据对模板进行替换
             $template = self::CONTROLLER_TEMPLATE;
             Helper()->str()->str_replace($data,$template);
