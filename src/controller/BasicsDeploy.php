@@ -37,6 +37,27 @@ class BasicsDeploy extends Controller
         'namespace'=>'',//门面控制器命名空间
         'basePath'=>'/deploy/',//基础路由
     ];
+
+
+    /**
+     * @param \pizepei\staging\Request $Request
+     *      get [object] 参数
+     *           user [string required] 操作人
+     * @return array [html]
+     * @title  命令行cli模式初始化项目
+     * @explainphp index_cli.php --route /deploy/initDeploy   --data user=pizepei   --domain oauth.heil.top
+     * @baseAuth DeployAuth:public
+     * @router get ssh
+     * @throws \Exception
+     */
+    public function ssh(Request $Request)
+    {
+        $url = 'https://gitlab.heil.top/oauth/authorize?client_id=65edeb2ca393a1aebda6d7c1a62fb7514efdb3c824163e75d44412ea06fcb5e0&redirect_uri='.urlencode('https://oauth.heil.top').'&response_type=code';#
+
+        echo '<a href="'.$url.'"></a>';
+    }
+
+
     /**
      * @param \pizepei\staging\Request $Request
      *      get [object] 参数
@@ -526,6 +547,31 @@ class BasicsDeploy extends Controller
         $accounId = AccountModel::table()->forceIndex(['number'])->where(['number'=>$this->Payload['number']])->fetch(['id']);
         return $this->succeed(['list'=>BasicDeploySerice::getInterspacelist($accounId['id'])],'获取成功');
     }
+
+    /**
+     * @Author pizepei
+     * @Created 2019/8/25 22:40
+     * @param \pizepei\staging\Request $Request
+     *      post [object]
+     *          name [string required] 空间名称（唯一）
+     *          label [string required] 简单的并且备注
+     *          linkman [string required] 联系人信息如公司信息 联系电话
+     *          remark [string required] 备注信息
+     *          maintainer [raw] [账号id,账号id]
+     *          status [int] 状态
+     * @title  添加部署空间
+     * @explain 添加部署空间
+     * @throws \Exception
+     * @return array [json]
+     *      data [raw]
+     * @router post interspace-list
+     */
+    public function addDeployInterspaceList(Request $Request)
+    {
+        return $this->succeed(['list'=>BasicDeploySerice::addInterspacelist($this->UserInfo,$Request->post())],'添加成功');
+    }
+
+
     /**
      * @Author pizepei
      * @Created 2019/8/25 22:40

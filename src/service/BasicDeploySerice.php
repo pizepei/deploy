@@ -12,7 +12,7 @@ use pizepei\deploy\model\interspace\DeployInterspaceModel;
 class BasicDeploySerice
 {
     /**
-     * 获取列表
+     * 获取部署空间列表
      * @param string $account_id
      * @return array
      * @throws \Exception
@@ -20,10 +20,29 @@ class BasicDeploySerice
     public static function getInterspacelist(string $account_id):array
     {
         $where = [
-            'authority|owner'=>$account_id,
-            'authority'=>['IN',['FDFC29EB-8142-F944-98C2-48AA70E5DC7D']],
+            'maintainer|owner'=>$account_id,
         ];
         return DeployInterspaceModel::table()->where($where)->fetchAll();
+    }
+
+    /**
+     * @Author 皮泽培
+     * @Created 2019/11/21 16:22
+     * @param string $account_id
+     * @param array $data
+     * @return array [json] 定义输出返回数据
+     * @title  添加部署空间
+     * @explain 添加部署空间
+     * @throws \Exception
+     */
+    public static function addInterspacelist(string $account_id ,array $data)
+    {
+
+
+
+
+        DeployInterspaceModel::table()->add();
+
 
     }
 

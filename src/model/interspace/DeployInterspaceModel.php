@@ -21,40 +21,28 @@ class DeployInterspaceModel extends Model
             'TYPE'=>'varchar(128)', 'DEFAULT'=>false, 'COMMENT'=>'随机生成空间标识字母和数字',
         ],
         'name'=>[
-            'TYPE'=>'varchar(128)', 'DEFAULT'=>false, 'COMMENT'=>'空间简称',
+            'TYPE'=>'varchar(255)', 'DEFAULT'=>false, 'COMMENT'=>'空间简称',
         ],
         'label'=>[
-            'TYPE'=>'varchar(128)', 'DEFAULT'=>'', 'COMMENT'=>'自定义分类标签',
-        ],
-        'phone'=>[
-            'TYPE'=>'varchar(20)', 'DEFAULT'=>'', 'COMMENT'=>'联系电话',
-        ],
-        'email'=>[
-            'TYPE'=>'varchar(128)', 'DEFAULT'=>'', 'COMMENT'=>'联系邮箱',
-        ],
-        'address'=>[
-            'TYPE'=>"varchar(600)", 'DEFAULT'=>'', 'COMMENT'=>'通讯地址',
+            'TYPE'=>'varchar(255)', 'DEFAULT'=>'', 'COMMENT'=>'自定义分类标签',
         ],
         'linkman'=>[
             'TYPE'=>"varchar(500)", 'DEFAULT'=>'', 'COMMENT'=>'联系人',
         ],
         'remark'=>[
-            'TYPE'=>"varchar(1000)", 'DEFAULT'=>'', 'COMMENT'=>'备注',
+            'TYPE'=>"varchar(1000)", 'DEFAULT'=>'', 'COMMENT'=>'备注信息',
         ],
         'config'=>[
-            'TYPE'=>'json', 'DEFAULT'=>false, 'COMMENT'=>'配置',
+            'TYPE'=>'json', 'DEFAULT'=>false, 'COMMENT'=>'空间级别配置',
         ],
         'config_template'=>[
-            'TYPE'=>'json', 'DEFAULT'=>false, 'COMMENT'=>'配置模板',
+            'TYPE'=>'json', 'DEFAULT'=>false, 'COMMENT'=>'空间级别配置模板',
         ],
         'owner'=>[
             'TYPE'=>'uuid', 'DEFAULT'=>false, 'COMMENT'=>'所有者账号uuid', 'COMMENT'=>'一般是创建者，在创建者离职后可更换其他人',
         ],
         'maintainer'=>[
-            'TYPE'=>'json', 'DEFAULT'=>false, 'COMMENT'=>'维护人员账号uuid',
-        ],
-        'authority'=>[
-            'TYPE'=>"ENUM('public','protected','private')", 'DEFAULT'=>'public', 'COMMENT'=>'空间权限','EXPLAIN'=>'public所有人都可以操作、protected使用DeployAuthority表判断权限、private私人的只有owner才可以操作',
+            'TYPE'=>'json', 'DEFAULT'=>false, 'COMMENT'=>'维护人员账号uuid，系统和服务的维护人员只能从中选择',
         ],
         'status'=>[
             'TYPE'=>"ENUM('1','2','3','4','5')", 'DEFAULT'=>'1', 'COMMENT'=>'1停用2、正常3、维护4、等待5、异常',
