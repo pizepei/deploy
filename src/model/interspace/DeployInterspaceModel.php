@@ -51,8 +51,8 @@ class DeployInterspaceModel extends Model
             'TYPE'=>'json', 'DEFAULT'=>false, 'COMMENT'=>'拓展',
         ],
         'INDEX'=>[
-            ['TYPE'=>'UNIQUE','FIELD'=>'name','NAME'=>'code','USING'=>'BTREE','COMMENT'=>'空间标识'],
-            ['TYPE'=>'UNIQUE','FIELD'=>'code','NAME'=>'name','USING'=>'BTREE','COMMENT'=>'空间简称'],
+            ['TYPE'=>'UNIQUE','FIELD'=>'name','NAME'=>'name','USING'=>'BTREE','COMMENT'=>'空间标识'],
+            ['TYPE'=>'UNIQUE','FIELD'=>'code','NAME'=>'code','USING'=>'BTREE','COMMENT'=>'空间简称'],
         ],
         'PRIMARY'=>'id',//主键
     ];

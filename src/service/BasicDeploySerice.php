@@ -37,13 +37,28 @@ class BasicDeploySerice
      */
     public static function addInterspacelist(string $account_id ,array $data)
     {
+        $data['owner'] = $account_id;
+        $data['code'] = Helper()->str()->str_rand(6,'',true);
+        return DeployInterspaceModel::table()->add($data);
+    }
 
-
-
-
-        DeployInterspaceModel::table()->add();
-
-
+    /**
+     * @Author 皮泽培
+     * @Created 2019/11/22 10:45
+     * @param string $account_id 当前操作人id
+     * @param string $id  空间id
+     * @return array [json] 定义输出返回数据
+     * @title  删除空间
+     * @explain 只有空间所以人才可以删除、空间有下级系统不可删除
+     * @throws \Exception
+     */
+    public static function delInterspacelist(string $account_id ,string $id)
+    {
+        #通过
+        $Interspace = DeployInterspaceModel::table()->get($id);
+        if (empty($Interspace)){error('空间不存在');}
+        if ($Interspace['owner'] !==$account_id){error('该空间不属于您，无权限操作！');}
+        # 查询空间下是否有系统
     }
 
     /**

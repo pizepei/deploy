@@ -25,7 +25,7 @@ class DeployAuthorityModel extends Model
             'TYPE'=>'uuid', 'DEFAULT'=>false, 'COMMENT'=>'账号id',
         ],
         'object_type'=>[
-            'TYPE'=>"ENUM('interspace','microService','system')", 'DEFAULT'=>'microService', 'COMMENT'=>'对象类型',
+            'TYPE'=>"ENUM('interspace','service','system')", 'DEFAULT'=>'microService', 'COMMENT'=>'对象类型',
         ],
         'status'=>[
             'TYPE'=>"ENUM('1','2','3','4','5')", 'DEFAULT'=>'1', 'COMMENT'=>'1停用2、正常3、维护4、等待5、异常',

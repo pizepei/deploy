@@ -34,6 +34,7 @@ class BasicsDeploy extends Controller
     const CONTROLLER_INFO = [
         'User'=>'pizepei',
         'title'=>'部署控制器',//控制器标题
+        'baseAuth'=>'UserAuth:test',//基础权限继承（加命名空间的类名称）
         'namespace'=>'',//门面控制器命名空间
         'basePath'=>'/deploy/',//基础路由
     ];
@@ -562,14 +563,36 @@ class BasicsDeploy extends Controller
      * @title  添加部署空间
      * @explain 添加部署空间
      * @throws \Exception
+     * @baseAuth UserAuth:test
      * @return array [json]
      *      data [raw]
-     * @router post interspace-list
+     * @router post interspace/info
      */
     public function addDeployInterspaceList(Request $Request)
     {
-        return $this->succeed(['list'=>BasicDeploySerice::addInterspacelist($this->UserInfo,$Request->post())],'添加成功');
+        return $this->succeed(BasicDeploySerice::addInterspacelist($this->UserInfo['id'],$Request->post()),'添加成功');
     }
+
+
+    /**
+     * @Author pizepei
+     * @Created 2019/8/25 22:40
+     * @param \pizepei\staging\Request $Request
+     *      path [object]
+     *          id [uuid] 空间id
+     * @title  删除部署空间
+     * @explain 删除部署空间（只有所以者可删除、有下级空间不可删除）
+     * @throws \Exception
+     * @baseAuth UserAuth:test
+     * @return array [json]
+     *      data [raw]
+     * @router delete interspace/:id[uuid]
+     */
+    public function deleteDeployInterspaceList(Request $Request)
+    {
+        return $this->succeed(BasicDeploySerice::delInterspacelist($this->UserInfo['id'],$Request->post()),'添加成功');
+    }
+
 
 
     /**
