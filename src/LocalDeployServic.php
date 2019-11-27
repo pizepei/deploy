@@ -223,6 +223,8 @@ class LocalDeployServic
      * @Created 2019/11/14 16:13
      * @param App $App
      * @param $param
+     * @explain 规划为应用控制器全部由此方法创建不在记录在git中，因此在开发模式下在进入路由前执行此方法动态生成控制器
+     *          同时开发模式下可能响应时间会更长
      * @title  控制器初始化
      * @throws \Exception
      */
