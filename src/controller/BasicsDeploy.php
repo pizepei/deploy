@@ -67,7 +67,7 @@ class BasicsDeploy extends Controller
      * @title  命令行cli模式初始化项目
      * @explainphp index_cli.php --route /deploy/initDeploy   --data user=pizepei   --domain oauth.heil.top
      * @baseAuth DeployAuth:public
-     * @router cli initDeploy
+     * @router get initDeploy
      * @throws \Exception
      */
     public function cliInitDeploy(Request $Request)
