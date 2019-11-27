@@ -285,10 +285,13 @@ class LocalDeployServic
             $controllerInfoPath = str_replace(['\\'],[DIRECTORY_SEPARATOR],$controllerInfo['namespace']);
             $controllerPath = '..'.DIRECTORY_SEPARATOR.$controllerInfoPath.DIRECTORY_SEPARATOR.$controllerInfo['className'].'.php';
             $controllerDir = '..'.DIRECTORY_SEPARATOR.$controllerInfoPath.DIRECTORY_SEPARATOR;
-            if (file_exists($controllerPath)){
-                # 文件存在跳过
-                continue;
+            if ( !isset($param['force']) || $param['force']!==true){
+                if (file_exists($controllerPath)){
+                    # 文件存在跳过
+                    continue;
+                }
             }
+
             # 如果没有就按照CONTROLLER_INFO['namespace']写入对应的门面控制器文件类
             # 准备数据
             $data = [
