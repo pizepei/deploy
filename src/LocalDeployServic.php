@@ -235,7 +235,6 @@ class LocalDeployServic
         $path = [];
         $baseAuthGroup = [];
         foreach($pathData as &$value){
-//            var_dump($value);
             # 处理包信息
             $packageInfo = json_decode($value['packageInfo'],true);
             $packageName = $packageInfo['name'];
@@ -278,6 +277,12 @@ class LocalDeployServic
             if (empty($controllerInfo['basePath']) || empty($controllerInfo['title'])){
                 continue;
             }
+
+            # 支持在部署配置中设置需要排除的包控制器
+            if (in_array($controllerInfo['namespace'],\Deploy::EXCLUDE_PACKAGE)){
+                continue;
+            }
+
             # 基础控制器类名
             $classBasicsExplode = explode('\\',$use_namespace);
             $classBasicsName = end($classBasicsExplode);
@@ -316,8 +321,6 @@ class LocalDeployServic
                 'use_namespace'=>$use_namespace,# 基础控制器的命名空间
                 'className' =>$controllerInfo['className'],
                 'classBasicsName'=>$classBasicsName,
-                # 包信息
-//                'basePermissions'=>$basePermissions,
                 'packageName'=>$packageName,
                 'packageAuthor'=>$packageAuthor,
             ];
@@ -329,11 +332,8 @@ class LocalDeployServic
             # 写入文件
             file_put_contents($controllerPath,$template);
         }
-//        file_put_contents($controllerPath,$template);
         # 写入权限文件$permissions
         $App->InitializeConfig()->set_config('BaseAuthGroup',['DATA'=>$baseAuthGroup],$App->__DEPLOY_CONFIG_PATH__.DIRECTORY_SEPARATOR.$App->__APP__.DIRECTORY_SEPARATOR,'config\\'.$App->__APP__,'基础权限集合');
-
-//        var_dump(BaseAuthGroup::DATA);
 
     }
 
