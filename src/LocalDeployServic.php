@@ -262,8 +262,16 @@ class LocalDeployServic
                 $use_namespace = str_replace(['.php','/','..'.DIRECTORY_SEPARATOR,'src','..','\\\\'],['',"\\",'','','','\\'],$value['path']);
             }else{
                 $use_namespace = str_replace(['.php','/','..'.DIRECTORY_SEPARATOR,DIRECTORY_SEPARATOR.'src'.DIRECTORY_SEPARATOR,'..'],['',"\\",'','\\',''],$value['path']);
-
             }
+
+            # 判断路径中是否有 - 有就删除- 并且替换-后面的字母为大写
+            preg_match('/[-][a-z]/s',$use_namespace,$matc);//字段
+            if (!empty($matc)){
+                foreach ($matc as $matcValue){
+                    $use_namespace = str_replace([$matcValue],[strtoupper(str_replace(['-'],[''],$matcValue))],$use_namespace);
+                }
+            }
+
             # 获取基础控制器的信息
             $controllerInfo = $use_namespace::CONTROLLER_INFO;
             # 通过 CONTROLLER_INFO['namespace'] 和 CONTROLLER_INFO['basePath'] 确定是否是有效的基础控制器信息
