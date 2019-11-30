@@ -59,8 +59,28 @@ class BasicDeploySerice
         if (empty($Interspace)){error('空间不存在');}
         if ($Interspace['owner'] !==$account_id){error('该空间不属于您，无权限操作！');}
         # 查询空间下是否有系统
+        DeployInterspaceModel::table()->del(['id'=>$id]);
     }
-
+    /**
+     * @Author 皮泽培
+     * @Created 2019/11/22 10:45
+     * @param string $account_id 当前操作人id
+     * @param string $id  空间id
+     * @return array [json] 定义输出返回数据
+     * @title  删除空间
+     * @explain 只有空间所以人才可以删除、空间有下级系统不可删除
+     * @throws \Exception
+     */
+    public static function updateInterspacelist(string $account_id ,string $id,array $data)
+    {
+        #通过
+        $Interspace = DeployInterspaceModel::table()->get($id);
+        if (empty($Interspace)){error('空间不存在');}
+        if ($Interspace['owner'] !==$account_id){error('该空间不属于您，无权限操作！');}
+        # 查询空间下是否有系统
+        # 记录操作
+        DeployInterspaceModel::table()->where(['id'=>$id])->update($data);
+    }
     /**
      * @title 获取用户列表（穿梭框使用）
      * @param array $user 默认操作的id

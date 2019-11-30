@@ -590,9 +590,33 @@ class BasicsDeploy extends Controller
      */
     public function deleteDeployInterspaceList(Request $Request)
     {
-        return $this->succeed(BasicDeploySerice::delInterspacelist($this->UserInfo['id'],$Request->post()),'添加成功');
+        return $this->succeed(BasicDeploySerice::delInterspacelist($this->UserInfo['id'],$Request->path('id')),'删除成功');
     }
-
+    /**
+     * @Author pizepei
+     * @Created 2019/8/25 22:40
+     * @param \pizepei\staging\Request $Request
+     *      path [object]
+     *          id [uuid] 空间id
+     *      raw [object] 修改的数据
+     *          name [string required] 空间名称（唯一）
+     *          label [string required] 简单的并且备注标签
+     *          linkman [string required] 联系人信息如公司信息 联系电话
+     *          remark [string required] 备注信息
+     *          maintainer [raw] [账号id,账号id]
+     *          status [int] 状态
+     * @title  修改部署空间
+     * @explain 修改部署空间
+     * @throws \Exception
+     * @baseAuth UserAuth:test
+     * @return array [json]
+     *      data [raw]
+     * @router put interspace/:id[uuid]
+     */
+    public function updateDeployInterspaceList(Request $Request)
+    {
+        return $this->succeed(BasicDeploySerice::updateInterspacelist($this->UserInfo['id'],$Request->path('id'),$Request->raw()),'修改成功');
+    }
 
 
     /**
