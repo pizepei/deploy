@@ -540,13 +540,21 @@ class BasicsDeploy extends Controller
      * @explain 部署空间列表
      * @throws \Exception
      * @return array [json]
-     *      data [raw]
+     *      data [object]
+     *          list [objectList]
+     *              id [uuid] 空间id
+     *              code [string required] 空间标识（唯一）
+     *              name [string required] 空间名称（唯一）
+     *              label [string required] 简单的并且备注
+     *              linkman [string required] 联系人信息如公司信息 联系电话
+     *              remark [string required] 备注信息
+     *              maintainer [raw] [账号id,账号id]
+     *              status [int] 状态
      * @router get interspace-list
      */
     public function getDeployInterspaceList(Request $Request)
     {
-        $accounId = AccountModel::table()->forceIndex(['number'])->where(['number'=>$this->Payload['number']])->fetch(['id']);
-        return $this->succeed(['list'=>BasicDeploySerice::getInterspacelist($accounId['id'])],'获取成功');
+        return $this->succeed(['list'=>BasicDeploySerice::getInterspacelist($this->UserInfo['id'])],'获取成功');
     }
 
     /**
@@ -623,18 +631,20 @@ class BasicsDeploy extends Controller
      * @Author pizepei
      * @Created 2019/8/25 22:40
      * @param \pizepei\staging\Request $Request
+     *      path [object]
+     *          id [uuid] 空间id
      * @title  获取用户列表
      * @explain 获取用户列表（穿梭框使用）
      * @throws \Exception
      * @return array [json]
      *      data [raw]
-     * @router get account/ltransfer-list
+     * @router get interspace/account/transfer-list/:id[uuid]
      */
     public function getAccountLtransferIst(Request $Request)
     {
-        $accounId = AccountModel::table()->forceIndex(['number'])->where(['number'=>$this->Payload['number']])->fetch(['id']);
+        # 在编辑时通过空间id获取选中数据
 
-        return $this->succeed(BasicDeploySerice::getAccountLtransferIst([$accounId['id']]),'获取成功');
+        return $this->succeed(BasicDeploySerice::getAccountLtransferIst([$this->UserInfo['id']]),'获取成功');
     }
 
 }

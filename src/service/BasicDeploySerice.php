@@ -67,7 +67,7 @@ class BasicDeploySerice
      * @param string $account_id 当前操作人id
      * @param string $id  空间id
      * @return array [json] 定义输出返回数据
-     * @title  删除空间
+     * @title  修改空间
      * @explain 只有空间所以人才可以删除、空间有下级系统不可删除
      * @throws \Exception
      */
@@ -77,6 +77,14 @@ class BasicDeploySerice
         $Interspace = DeployInterspaceModel::table()->get($id);
         if (empty($Interspace)){error('空间不存在');}
         if ($Interspace['owner'] !==$account_id){error('该空间不属于您，无权限操作！');}
+        #处理maintainer数据
+        if (isset($data['maintainer'])){
+            if (!is_array($data['maintainer'])){$data['maintainer'] = json_decode($data['maintainer'],true);}
+            foreach ($data['maintainer'] as $key=>$value){
+                    $maintainer[] = $value['value'];
+            }
+            $data['maintainer'] = $maintainer??[];
+        }
         # 查询空间下是否有系统
         # 记录操作
         DeployInterspaceModel::table()->where(['id'=>$id])->update($data);
