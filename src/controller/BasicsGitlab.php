@@ -8,7 +8,7 @@ namespace pizepei\deploy\controller;
 
 use pizepei\deploy\service\BasicsGitlabService;
 use pizepei\helper\Helper;
-use pizepei\model\cache\drive\Cache;
+use pizepei\model\cache\Cache;
 use pizepei\staging\Controller;
 use pizepei\staging\Request;
 
@@ -84,10 +84,12 @@ class BasicsGitlab extends Controller
         }
         if (!$REDIRECT_URI) $this->error('REDIRECT_URI 不能为空');
         $REDIRECT_URI = (Helper()->is_https()?'https://':"http://").$_SERVER['HTTP_HOST'].'/'.\Deploy::MODULE_PREFIX.'/gitlab/oauth.json?redirect='.$REDIRECT_URI.'&'.\Config::ACCOUNT['GET_ACCESS_TOKEN_NAME'].'='.$this->ACCESS_TOKEN;
-        Cache::set(['OauthUrlREDIRECT_URI',explode('.',$this->ACCESS_TOKEN)],$REDIRECT_URI);
+
+        Cache::set(['OauthUrlREDIRECT_URI',$this->ACCESS_SIGNATURE],$REDIRECT_URI,30);
+        $redirect_uri = Cache::get(['OauthUrlREDIRECT_URI',$this->ACCESS_SIGNATURE]);
 
         $utl = \Deploy::GITLAB['OauthUrl'].'/oauth/authorize?client_id='.\Deploy::GITLAB['AppId'].'&redirect_uri='.urlencode($REDIRECT_URI).'&response_type=code';
-        $this->succeed(['url'=>$utl,'REDIRECT_URI'=>$REDIRECT_URI]);
+        $this->succeed(['url'=>$utl,'REDIRECT_URI'=>$REDIRECT_URI,'OauthUrlREDIRECT_URI'=>$redirect_uri,'ACCESS_SIGNATURE'=>$this->ACCESS_SIGNATURE]);
     }
     /**
      * @param \pizepei\staging\Request $Request
@@ -98,19 +100,25 @@ class BasicsGitlab extends Controller
      *      data [raw]
      * @title  获取gitlab授权地址
      * @explain  获取gitlab授权地址
+     * @baseAuth UserAuth:test
      * @router get oauth
      * @throws \Exception
      */
     public function oauth(Request $Request)
     {
+        $redirect_uri = Cache::get(['OauthUrlREDIRECT_URI',$this->ACCESS_SIGNATURE]);
+        if (empty($redirect_uri)) $this->error('非法请求:OauthUrlREDIRECT_URI');
         $data = Helper()->httpRequest(\Deploy::GITLAB['OauthUrl'].'/oauth/token',json_encode([
             'client_id'=>\Deploy::GITLAB['AppId'],
             'client_secret'=>\Deploy::GITLAB['Key'],
             'code'=>$Request->input('code'),
             'grant_type'=>'authorization_code',
-            'redirect_uri'=> 'http://oauth.heil.top/normative/gitlab/oauth.json?redirect=http://oauth.heil.top/&access-token=eyJhbGciOiJhZXMiLCJzaWciOiJtZDUiLCJ0eXAiOiJKV1QiLCJhcHBpZCI6ImFzaGFhYXNkMTIzMmpqZHNraGtreCIsIm51bWJlciI6IlN1cGVyQWRtaW5fMDAyNzYwMjYwMTIwNDk2MTE0NDQifQ==.SGlUc2tNck9hQzBGbzJDWW5XUVo5TGFoWkFqSVhwMnYwMk5ETmJtMFFuWXhqJTJGc3hCRmRCJTJGNXVndTh2RzlpTUNuSkhZalU2MDZIOHJNQ1hiQ3d4YzNUOFhIRnpYUmhQbHdaSmlBVXZ6V2oxcWRkbFElMkZnQUt3bWI3azhLS1JrZ1BoMUpXcENINzkwS0kwOWRUM3NXZlcxVGlFNTJpaDJib2hMRFhMbnU4dWYzJTJCazQzJTJGZEQ2NHdXM2FQMjhuZ0VFNEljVjUwJTJGVHR3UkpDMXdlQ3Y5JTJCSjglMkZzUThudGVzNXA5ZVBUa1clMkZmOGhUMCUyQjBjbVVTT2ZLeHJaVnJia2FiS2NPVnlJRmklMkJ3dWxBTWd5d1A3VG0lMkZhWUJwcHY0WkJyWHFhYVRIS3BqWnlXaDMlMkJ6V3JnQVdsdW9tT3R2MHR2MnV2MGwyRWlrb1F4ZGc5Q2hyaGFJZllYcGxjb2xxYjdNcUpQUzlIQlgxR0JDeHhWNkh2UXUwYUVYdG1WS0k4QVIxQ2I=.e92bd476cba26757897804ca01e6e91f',
+            'redirect_uri'=> $redirect_uri,
         ]));
-        var_dump($data['body']);
+        /**
+         * 写入？
+         */
+        $this->succeed($data['body']);
 
     }
     /**
