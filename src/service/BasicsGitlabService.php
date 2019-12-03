@@ -5,6 +5,7 @@
 namespace pizepei\deploy\service;
 
 
+use pizepei\deploy\model\gitlab\GitlabAccountModel;
 use pizepei\helper\Helper;
 
 class BasicsGitlabService
@@ -27,16 +28,20 @@ class BasicsGitlabService
 
     /**
      * api请求
+     * @param $account_id 账号id
      * @param $api
      * @param string $data
      * @return mixed
      * @throws \Exception
      */
-    public function apiRequest($api,$data='')
+    public function apiRequest($account_id,$api,$data='')
     {
+        # 获取当前账号的  PRIVATE-TOKEN
+        $Account = GitlabAccountModel::table()->where(['account_id'=>$account_id])->fetch();
+
         $url = 'https://gitlab.heil.top/api/v3/'.$api;
         $res = Helper::init()->httpRequest($url,$data,[
-            'header'=>['PRIVATE-TOKEN: '.\Deploy::GITLAB['PRIVATE-TOKEN']]
+            'header'=>['PRIVATE-TOKEN: '.'Tw6ENxgTqEvEmyjKanFM']
         ]);
         if ($res['code'] !== 200){
             throw new \Exception(self::ERROR_CODE[$res['code']]??'请求错误');
@@ -45,12 +50,12 @@ class BasicsGitlabService
         $body = Helper::init()->json_decode($res['body']);
 
         $resData['list'] = $body;
-        $resData['total'] = $Helper['X-Total']; #物品总数
-        $resData['totalPages'] = $Helper['X-Total-Pages']; #总页数
-        $resData['perPage'] = $Helper['X-Per-Page']; # 每页的项目数
-        $resData['page'] = $Helper['X-Page']; # 当前页面的索引（从1开始）
-        $resData['nextPage'] = $Helper['X-Next-Page']; # 下一页的索引
-        $resData['prevPage'] = $Helper['X-Prev-Page']; # 上一页的索引
+        $resData['total'] = $Helper['X-Total']??0; #物品总数
+        $resData['totalPages'] = $Helper['X-Total-Pages']??0; #总页数
+        $resData['perPage'] = $Helper['X-Per-Page']??0; # 每页的项目数
+        $resData['page'] = $Helper['X-Page']??0; # 当前页面的索引（从1开始）
+        $resData['nextPage'] = $Helper['X-Next-Page']??0; # 下一页的索引
+        $resData['prevPage'] = $Helper['X-Prev-Page']??0; # 上一页的索引
         return $resData;
     }
 
