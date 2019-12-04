@@ -24,7 +24,7 @@ class BasicsGitlab extends Controller
         'title'=>'Gitlab控制器',//控制器标题
         'className'=>'Gitlab',//门面控制器名称
         'namespace'=>'',//门面控制器命名空间
-        'baseAuth'=>'DeployAuth:test',//基础权限继承（加命名空间的类名称）
+        'baseAuth'=>'UserAuth:test',//基础权限继承（加命名空间的类名称）
         'authGroup'=>'[user:用户相关,admin:管理员相关]',//[user:用户相关,admin:管理员相关] 权限组列表
         'basePath'=>'/gitlab/',//基础路由
     ];
@@ -60,7 +60,7 @@ class BasicsGitlab extends Controller
     public function user(Request $Request)
     {
         $service = new BasicsGitlabService();
-        return $this->succeed($service->apiRequest('user'));
+        return $this->succeed($service->apiRequest($this->UserInfo['id'],'user'));
     }
 
     /**
@@ -179,21 +179,21 @@ class BasicsGitlab extends Controller
     public function projectsList(Request $Request)
     {
         $service = new BasicsGitlabService();
-        return $this->succeed($service->apiRequest('projects'));
+        return $this->succeed($service->apiRequest($this->UserInfo['id'],'projects'));
     }
 
     /**
      * @return array [json]
      *      data [raw]
      * @title  群组列表
-     * @explain 建议生产发布新版本时执行
+     * @explain 获取当前用户可查看的群组列表
      * @router get groups-list
      * @throws \Exception
      */
     public function groupsList()
     {
         $service = new BasicsGitlabService();
-        return $this->succeed( $service->apiRequest('groups'));
+        return $this->succeed( $service->apiRequest($this->UserInfo['id'],'groups'));
     }
     /**
      * @return array [json]
@@ -206,16 +206,15 @@ class BasicsGitlab extends Controller
     public function groupsProjectsList()
     {
         $service = new BasicsGitlabService();
-        $groups = $service->apiRequest('groups');
+        $groups = $service->apiRequest($this->UserInfo['id'],'groups');
         if (empty($groups['list'])){
             return $this->succeed($groups,'获取成功');
         }
         #通过分组获取 项目列表
         foreach ($groups['list'] as $key=>&$value){
-            $value['lits'] = $service->apiRequest('groups/'.$value['id'].'/projects')['list']??[];
+            $value['lits'] = $service->apiRequest($this->UserInfo['id'],'groups/'.$value['id'].'/projects')['list']??[];
         }
         return $this->succeed($groups,'获取成功');
-
     }
     /**
      * @param \pizepei\staging\Request $Request
@@ -231,8 +230,7 @@ class BasicsGitlab extends Controller
     public function groupsProjectsInfo(Request $Request)
     {
         $service = new BasicsGitlabService();
-        return $this->succeed( $service->apiRequest('groups/'.$Request->path('id').'/projects'));
+        return $this->succeed( $service->apiRequest($this->UserInfo['id'],'groups/'.$Request->path('id').'/projects'));
     }
-
 
 }
