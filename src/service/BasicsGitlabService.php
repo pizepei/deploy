@@ -28,21 +28,26 @@ class BasicsGitlabService
 
     /**
      * api请求
-     * @param $account_id 账号id
-     * @param $api
+     * @param string $account_id 账号id
+     * @param string $api
      * @param string $data
+     * @param string $token
+     * @param string $tokenType  private[PRIVATE-TOKEN]     access[access_token]
      * @return mixed
      * @throws \Exception
      */
-    public function apiRequest($account_id,$api,$data='')
+    public function apiRequest($account_id,$api,$data='',$token='',$tokenType='private')
     {
-        # 获取当前账号的  PRIVATE-TOKEN
-        $Account = GitlabAccountModel::table()->where(['account_id'=>$account_id])->fetch();
-
+        if ($token ==''){
+            # 获取当前账号的  PRIVATE-TOKEN
+            $Account = GitlabAccountModel::table()->where(['account_id'=>$account_id])->fetch();
+            $token = $Account[$tokenType=='private'?'private_token':'access_token'];
+        }
+        $parameter = [
+            'header'=>[$tokenType=='private'?'PRIVATE-TOKEN: '.$token:'Authorization: Bearer '.$token]
+        ];
         $url = 'https://gitlab.heil.top/api/v3/'.$api;
-        $res = Helper::init()->httpRequest($url,$data,[
-            'header'=>['PRIVATE-TOKEN: '.'Tw6ENxgTqEvEmyjKanFM']
-        ]);
+        $res = Helper::init()->httpRequest($url,$data,$parameter);
         if ($res['code'] !== 200){
             throw new \Exception(self::ERROR_CODE[$res['code']]??'请求错误');
         }

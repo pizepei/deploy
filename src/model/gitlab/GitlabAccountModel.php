@@ -22,31 +22,55 @@ class GitlabAccountModel extends Model
             'TYPE'=>'uuid','COMMENT'=>'主键uuid','DEFAULT'=>false,
         ],
         'gitlab_id'=>[
-            'TYPE'=>'varchar(128)', 'DEFAULT'=>'', 'COMMENT'=>'gitlabId',
+            'TYPE'=>'int', 'DEFAULT'=>0, 'COMMENT'=>'gitlabId',
+        ],
+        'name'=>[
+            'TYPE'=>'varchar(128)', 'DEFAULT'=>'', 'COMMENT'=>'昵称',
+        ],
+        'username'=>[
+            'TYPE'=>'varchar(128)', 'DEFAULT'=>'', 'COMMENT'=>'用户名',
         ],
         'account_id'=>[
-            'TYPE'=>'uuid', 'DEFAULT'=>false, 'COMMENT'=>'账号id',
+            'TYPE'=>'uuid', 'DEFAULT'=>'', 'COMMENT'=>'账号id',
         ],
-        'gitlab_account'=>[
-            'TYPE'=>'varchar(128)', 'DEFAULT'=>'', 'COMMENT'=>'一般是邮箱',
+        'email'=>[
+            'TYPE'=>'varchar(128)', 'DEFAULT'=>'', 'COMMENT'=>'邮箱',
+        ],
+        'web_url'=>[
+            'TYPE'=>'varchar(128)', 'DEFAULT'=>'', 'COMMENT'=>'web_url',
+        ],
+        'avatar_url'=>[
+            'TYPE'=>'varchar(128)', 'DEFAULT'=>'', 'COMMENT'=>'头像',
+        ],
+        'website_url'=>[
+            'TYPE'=>'varchar(128)', 'DEFAULT'=>'', 'COMMENT'=>'website_url',
         ],
         'private_token'=>[
-            'TYPE'=>'varchar(128)', 'DEFAULT'=>'', 'COMMENT'=>'API使用的private_token',
+            'TYPE'=>'varchar(128)', 'DEFAULT'=>'', 'COMMENT'=>'private_token',
+        ],
+        'access_token'=>[
+            'TYPE'=>'varchar(128)', 'DEFAULT'=>'', 'COMMENT'=>'API使用的access_token',
+        ],
+        'refresh_token'=>[
+            'TYPE'=>'varchar(128)', 'DEFAULT'=>'', 'COMMENT'=>'更新refresh_token',
+        ],
+        'scope'=>[
+            'TYPE'=>'varchar(128)', 'DEFAULT'=>'', 'COMMENT'=>'范围',
+        ],
+        'token_type'=>[
+            'TYPE'=>'varchar(128)', 'DEFAULT'=>'', 'COMMENT'=>'类型',
         ],
         'status'=>[
             'TYPE'=>"ENUM('1','2','3','4','5')", 'DEFAULT'=>'1', 'COMMENT'=>'1停用2、正常3、维护4、等待5、异常',
-        ],
-        'gitlab_url'=>[
-            'TYPE'=>"varchar(128)", 'DEFAULT'=>false, 'COMMENT'=>'gitlab服务器',
         ],
         'expand'=>[
             'TYPE'=>'json', 'DEFAULT'=>false, 'COMMENT'=>'拓展',
         ],
         'INDEX'=>[
             ['TYPE'=>'UNIQUE','FIELD'=>'gitlab_id','NAME'=>'gitlab_id','USING'=>'BTREE','COMMENT'=>'gitlabId'],
-            ['TYPE'=>'UNIQUE','FIELD'=>'gitlab_account','NAME'=>'gitlab_account','USING'=>'BTREE','COMMENT'=>'一般是邮箱'],
+            ['TYPE'=>'UNIQUE','FIELD'=>'email','NAME'=>'email','USING'=>'BTREE','COMMENT'=>'一般是邮箱'],
             ['TYPE'=>'UNIQUE','FIELD'=>'account_id','NAME'=>'account_id','USING'=>'BTREE','COMMENT'=>'account_id'],
-            ['TYPE'=>'UNIQUE','FIELD'=>'account_id,gitlab_account,gitlab_id','NAME'=>'account_id,gitlab_account,gitlab_id','USING'=>'BTREE','COMMENT'=>'做UNIQUE'],
+            ['TYPE'=>'UNIQUE','FIELD'=>'account_id,email,gitlab_id','NAME'=>'account_id,email,gitlab_id','USING'=>'BTREE','COMMENT'=>'做UNIQUE'],
         ],
         'PRIMARY'=>'id',//主键
     ];
@@ -63,4 +87,18 @@ class GitlabAccountModel extends Model
      */
     protected $table_structure_log = [
     ];
+
+    /**
+     * 类型模板
+     * 状态1等待审核、2审核通过3、禁止使用4、保留
+     * replace_type
+     */
+    protected $replace_status =[
+        1=>'等待审核',
+        2=>'审核通过',
+        3=>'禁止使用',
+        4=>'保留',
+        5=>'保留',
+    ];
+
 }

@@ -6,6 +6,7 @@
 
 namespace pizepei\deploy\controller;
 
+use pizepei\deploy\model\gitlab\GitlabAccountModel;
 use pizepei\deploy\service\BasicsGitlabService;
 use pizepei\helper\Helper;
 use pizepei\model\cache\Cache;
@@ -65,9 +66,19 @@ class BasicsGitlab extends Controller
     /**
      * @param \pizepei\staging\Request $Request
      *      get [object] 参数
-     *          redirect_uri [string] redirect_uri地址
+     *          domain [string] 域名
+     *          href [string]   前端路由路径
+     *          redirect_uri [string] redirect_uri地址 最高优先级
      * @return array [json]
-     *      data [raw]
+     *      data [object]
+     *          url [string] oauth地址
+     *          GitlabAccount [object] 如果已经存在授权信息
+     *              name [string] 用户名
+     *              update_time [string]    更新时间
+     *              email [string]  邮箱
+     *              web_url [string]    主页面地址
+     *              username [string] 用户名
+     *              status [string] 状态
      * @title  获取gitlab授权地址
      * @explain  获取gitlab授权地址
      * @baseAuth UserAuth:test
@@ -77,19 +88,25 @@ class BasicsGitlab extends Controller
     public function getOauthUrl(Request $Request)
     {
         if (!isset(\Deploy::GITLAB['OauthUrl']) || !isset(\Deploy::GITLAB['AppId'])) $this->error('没有GITLAB config');
+        # 确定redirect
         if ($Request->input('redirect_uri')){
-            $REDIRECT_URI = $Request->input('redirect_uri');
+            $redirect = $Request->input('redirect_uri');
+        }else if(empty($Request->input('href'))){
+            $redirect = $_SERVER['HTTP_REFERER'];
         }else{
-            $REDIRECT_URI = $_SERVER['HTTP_REFERER'];
+            $domain = empty($Request->input('domain'))?(Helper()->is_https()?'https://':"http://").$_SERVER['HTTP_HOST']:$Request->input('domain');
+            $redirect = $domain.$Request->input('href');
         }
-        if (!$REDIRECT_URI) $this->error('REDIRECT_URI 不能为空');
-        $REDIRECT_URI = (Helper()->is_https()?'https://':"http://").$_SERVER['HTTP_HOST'].'/'.\Deploy::MODULE_PREFIX.'/gitlab/oauth.json?redirect='.$REDIRECT_URI.'&'.\Config::ACCOUNT['GET_ACCESS_TOKEN_NAME'].'='.$this->ACCESS_TOKEN;
-
+        if (!$redirect) $this->error('REDIRECT_URI 不能为空');
+        # 确定$REDIRECT_URI
+        $REDIRECT_URI = (Helper()->is_https()?'https://':"http://").$_SERVER['HTTP_HOST'].'/'.\Deploy::MODULE_PREFIX.'/gitlab/oauth.json?redirect='.urlencode($redirect).'&'.\Config::ACCOUNT['GET_ACCESS_TOKEN_NAME'].'='.$this->ACCESS_TOKEN;
+        # 缓存
         Cache::set(['OauthUrlREDIRECT_URI',$this->ACCESS_SIGNATURE],$REDIRECT_URI,30);
-        $redirect_uri = Cache::get(['OauthUrlREDIRECT_URI',$this->ACCESS_SIGNATURE]);
-
+        #拼接OauthUrl
         $utl = \Deploy::GITLAB['OauthUrl'].'/oauth/authorize?client_id='.\Deploy::GITLAB['AppId'].'&redirect_uri='.urlencode($REDIRECT_URI).'&response_type=code';
-        $this->succeed(['url'=>$utl,'REDIRECT_URI'=>$REDIRECT_URI,'OauthUrlREDIRECT_URI'=>$redirect_uri,'ACCESS_SIGNATURE'=>$this->ACCESS_SIGNATURE]);
+        # 查询是否已经授权
+        $GitlabAccount = GitlabAccountModel::table()->where(['account_id'=>$this->UserInfo['id']])->replaceField('fetch',['status']);
+        $this->succeed(['url'=>$utl,'REDIRECT_URI'=>$REDIRECT_URI,'GitlabAccount'=>$GitlabAccount]);
     }
     /**
      * @param \pizepei\staging\Request $Request
@@ -115,11 +132,38 @@ class BasicsGitlab extends Controller
             'grant_type'=>'authorization_code',
             'redirect_uri'=> $redirect_uri,
         ]));
-        /**
-         * 写入？
-         */
-        $this->succeed($data['body']);
-
+        $body = Helper()->json_decode($data['body']);
+        if (empty($body)) $this->error('数据错误','',$body);
+        if ($data['code'] !==200) $this->error($body['error_description']??'请求authorization_code 失败');
+        # 考虑到部署时git信息是和部署包在同一个模块内就不需要发送数据到中心
+        # 获取用户信息
+        $service = new BasicsGitlabService();
+        $userInfo = $service->apiRequest($this->UserInfo['id'],'user','',$body['access_token'],'access');
+        $userInfo = $userInfo['list'];
+        $GitlabAccount = GitlabAccountModel::table()->where(['account_id'=>$this->UserInfo['id']])->fetch();
+        if (empty($GitlabAccount)){
+            #增加
+            $GitlabAccountData['account_id'] = $this->UserInfo['id'];
+            $GitlabAccountData['gitlab_id'] = $userInfo['id'];
+            $GitlabAccountData['username'] = $userInfo['username'];
+            $GitlabAccountData['status'] = 2;
+        }else{
+            # 定义
+            $GitlabAccountData['id'] = $GitlabAccount['id'];
+        }
+        $GitlabAccountData['name'] = $userInfo['name'];
+        $GitlabAccountData['email'] = $userInfo['email'];
+        $GitlabAccountData['web_url'] = $userInfo['web_url'];
+        $GitlabAccountData['avatar_url'] = $userInfo['avatar_url'];
+        $GitlabAccountData['website_url'] = $userInfo['website_url'];
+        $GitlabAccountData['private_token'] = $userInfo['private_token'];
+        $GitlabAccountData['access_token'] = $body['access_token'];
+        $GitlabAccountData['refresh_token'] = $body['refresh_token'];
+        $GitlabAccountData['scope'] = $body['scope'];
+        $GitlabAccountData['token_type'] = $body['token_type'];
+        # 写入更新
+        GitlabAccountModel::table()->insert($GitlabAccountData);
+        $this->redirect($Request->input('redirect'));
     }
     /**
      * @param \pizepei\staging\Request $Request
