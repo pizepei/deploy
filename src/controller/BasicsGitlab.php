@@ -219,7 +219,7 @@ class BasicsGitlab extends Controller
     /**
      * @param \pizepei\staging\Request $Request
      *      path [object] 路径参数
-     *           id [int] 群组id
+     *           id [int] 群组id 0为所有 999999999为加星项目
      * @return array [json]
      *      data [raw]
      * @title  群组下项目列表
@@ -230,6 +230,13 @@ class BasicsGitlab extends Controller
     public function groupsProjectsInfo(Request $Request)
     {
         $service = new BasicsGitlabService();
+        if ($Request->path('id') ===0){
+            # 列出所有项目
+            return $this->succeed( $service->apiRequest($this->UserInfo['id'],'projects/all'));
+        }elseif ($Request->path('id') ===999999999){
+            # 获取加星项目
+            return $this->succeed( $service->apiRequest($this->UserInfo['id'],'projects/starred'));
+        }
         return $this->succeed( $service->apiRequest($this->UserInfo['id'],'groups/'.$Request->path('id').'/projects'));
     }
 
