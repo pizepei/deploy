@@ -16,6 +16,8 @@ use pizepei\deploy\LocalDeployServic;
 use pizepei\deploy\model\DeployServerConfigModel;
 use pizepei\deploy\model\DeployServerGroupModel;
 use pizepei\deploy\model\DeployServerRelevanceModel;
+use pizepei\deploy\model\system\DeploySystemModel;
+use pizepei\deploy\model\interspace\DeployInterspaceModel;
 use pizepei\deploy\service\BasicDeploySerice;
 use pizepei\helper\Helper;
 use pizepei\model\db\Model;
@@ -626,6 +628,29 @@ class BasicsDeploy extends Controller
         return $this->succeed(BasicDeploySerice::updateInterspacelist($this->UserInfo['id'],$Request->path('id'),$Request->raw()),'修改成功');
     }
 
+    /**
+     * @param \pizepei\staging\Request $Request
+     *      path [object] 路径参数
+     *           id [uuid] 空间ID
+     * @return array [json]
+     *      data [raw]
+     * @title  空间下的系统列表
+     * @explain 空间下的系统列表
+     * @router get system-list/:id[uuid]
+     * @throws \Exception
+     */
+    public function getSystemList(Request $Request)
+    {
+        # 查询空间信息判断是否有查看权限
+         $Interspace = DeployInterspaceModel::table()->get($Request->path('id'));
+         if (empty($Interspace)) $this->error('空间不存在');
+        if ($Interspace['owner'] !==$this->UserInfo['id']){
+            if (!in_array($this->UserInfo['id'],$Interspace['maintainer']))$this->error('无权限');
+        }
+        # 查询空间下的系统
+        $data = DeploySystemModel::table()->where(['interspace_id'=>$Request->path('id')])->fetchAll();
+        $this->succeed($data);
+    }
 
     /**
      * @Author pizepei
@@ -643,8 +668,13 @@ class BasicsDeploy extends Controller
     public function getAccountLtransferIst(Request $Request)
     {
         # 在编辑时通过空间id获取选中数据
+        return $this->succeed(['list'=>BasicDeploySerice::getInterspacelist($this->UserInfo['id'])],'获取成功');
 
-        return $this->succeed(BasicDeploySerice::getAccountLtransferIst([$this->UserInfo['id']]),'获取成功');
     }
+
+
+
+
+
 
 }

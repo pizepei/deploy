@@ -53,7 +53,6 @@ class BasicsGitlabService
         }
         $Helper = Helper::init()::arrayList()->array_explode_value($res['header'],': ',true);
         $body = Helper::init()->json_decode($res['body']);
-
         $resData['list'] = $body;
         $resData['total'] = $Helper['X-Total']??0; #物品总数
         $resData['totalPages'] = $Helper['X-Total-Pages']??0; #总页数

@@ -44,7 +44,8 @@ class BasicsGitlab extends Controller
     public function api(Request $Request)
     {
         $service = new BasicsGitlabService();
-        return $this->succeed($service->apiRequest($this->UserInfo['id'],'user'));
+
+        return $this->succeed($service->apiRequest($this->UserInfo['id'],'/projects/9/repository/commits?ref_name=sss'));
     }
     /**
      * @param \pizepei\staging\Request $Request
@@ -81,7 +82,6 @@ class BasicsGitlab extends Controller
      *              status [string] 状态
      * @title  获取gitlab授权地址
      * @explain  获取gitlab授权地址
-     * @baseAuth UserAuth:test
      * @router get oauth-url
      * @throws \Exception
      */
@@ -117,7 +117,6 @@ class BasicsGitlab extends Controller
      *      data [raw]
      * @title  获取gitlab授权地址
      * @explain  获取gitlab授权地址
-     * @baseAuth UserAuth:test
      * @router get oauth
      * @throws \Exception
      */
@@ -222,8 +221,8 @@ class BasicsGitlab extends Controller
      *           id [int] 群组id 0为所有 999999999为加星项目
      * @return array [json]
      *      data [raw]
-     * @title  群组下项目列表
-     * @explain 建议生产发布新版本时执行
+     * @title  gitlab群组下项目列表
+     * @explain 群组下项目列表
      * @router get groups/:id[int]/projects
      * @throws \Exception
      */
@@ -232,12 +231,34 @@ class BasicsGitlab extends Controller
         $service = new BasicsGitlabService();
         if ($Request->path('id') ===0){
             # 列出所有项目
-            return $this->succeed( $service->apiRequest($this->UserInfo['id'],'projects/all'));
+            return $this->succeed( $service->apiRequest($this->UserInfo['id'],'projects/all'),'获取成功');
         }elseif ($Request->path('id') ===999999999){
             # 获取加星项目
-            return $this->succeed( $service->apiRequest($this->UserInfo['id'],'projects/starred'));
+            return $this->succeed( $service->apiRequest($this->UserInfo['id'],'projects/starred'),'获取成功');
         }
-        return $this->succeed( $service->apiRequest($this->UserInfo['id'],'groups/'.$Request->path('id').'/projects'));
+        return $this->succeed( $service->apiRequest($this->UserInfo['id'],'groups/'.$Request->path('id').'/projects'),'获取成功');
     }
+
+
+    /**
+     * @param \pizepei\staging\Request $Request
+     *      path [object] 路径参数
+     *           id [int] 群组id 0为所有 999999999为加星项目
+     * @return array [json]
+     *      data [raw]
+     * @title  群组下已经被添加的服务项目列表
+     * @explain 群组下已经被添加的服务项目列表
+     * @router get service-module/:id[int]/projects
+     * @throws \Exception
+     */
+    public function getServiceModule(Request $Request)
+    {
+        $service = new BasicsGitlabService();
+
+        #查询服务模块表
+
+    }
+
+    
 
 }

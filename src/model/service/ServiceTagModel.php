@@ -58,6 +58,11 @@ class ServiceTagModel extends Model
         'extend'=>[
             'TYPE'=>'json', 'DEFAULT'=>false, 'COMMENT'=>'扩展配置',
         ],
+        'commit_time'=>[
+            'TYPE'=>'timestamp(6)',
+            'DEFAULT'=>false,//默认值
+            'COMMENT'=>'commit时间',//字段说明
+        ],
         'status'=>[
             'TYPE'=>"ENUM('1','2','3','4','5')", 'DEFAULT'=>'1', 'COMMENT'=>'1停用2、正常3、维护4、等待5、异常',
         ],
