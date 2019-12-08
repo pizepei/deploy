@@ -331,6 +331,8 @@ class BasicsDeploy extends Controller
      * @Author pizepei
      * @Created 2019/8/25 22:40
      * @param \pizepei\staging\Request $Request
+     *      get [object]
+     *          type [string] 数据类型
      * @title  获取主机分组
      * @explain 获取主机分组列表
      * @throws \Exception
@@ -340,6 +342,9 @@ class BasicsDeploy extends Controller
      */
     public function getDeployServerGroup(Request $Request)
     {
+        if ($Request->input('type') ==='transfer'){
+            return $this->succeed(DeployServerGroupModel::table()->fetchAll());
+        }
         return $this->succeed(['list'=>DeployServerGroupModel::table()->fetchAll()]);
     }
 
@@ -671,8 +676,6 @@ class BasicsDeploy extends Controller
         return $this->succeed(['list'=>BasicDeploySerice::getInterspacelist($this->UserInfo['id'])],'获取成功');
 
     }
-
-
 
 
 
