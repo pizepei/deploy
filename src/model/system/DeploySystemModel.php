@@ -62,7 +62,7 @@ class DeploySystemModel extends Model
             'TYPE'=>"ENUM('1','2','3','4','5')", 'DEFAULT'=>'1', 'COMMENT'=>'1停用2、正常3、维护4、等待5、异常',
         ],
         'INDEX'=>[
-            ['TYPE'=>'UNIQUE','FIELD'=>'name','NAME'=>'name','USING'=>'BTREE','COMMENT'=>'name'],
+            ['TYPE'=>'UNIQUE','FIELD'=>'name,interspace_id','NAME'=>'name,interspace_id','USING'=>'BTREE','COMMENT'=>'name,interspace_id'],
         ],
         'PRIMARY'=>'id',//主键
     ];

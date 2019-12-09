@@ -657,6 +657,56 @@ class BasicsDeploy extends Controller
         $this->succeed($data);
     }
 
+
+    /**
+     * @param \pizepei\staging\Request $Request
+     *      post [object] 路径参数
+     *          interspace_id [uuid] 空间ID
+     *          name [string required] 系统名称
+     *          explain [string required] 备注说明
+     *          domain [string required] 域名
+     *          run_pattern [string required] 运行模式
+     *          service_module [rae]  依赖的模块包
+     *          host_group [objectList] 主机分组信息
+     *              value [uuid] 主机分组id
+     *          status [int] 1停用2、正常3、维护4、等待5、异常
+     * @return array [json]
+     *      data [raw]
+     * @title  空间下添加系统
+     * @explain 空间下添加系统
+     * @router post system
+     * @throws \Exception
+     */
+    public function addSystemList(Request $Request)
+    {
+        # 查询空间信息判断是否有查看权限
+        $Interspace = DeployInterspaceModel::table()->get($Request->post('interspace_id'));
+        if (empty($Interspace)) $this->error('空间不存在');
+        if ($Interspace['owner'] !==$this->UserInfo['id']){
+            if (!in_array($this->UserInfo['id'],$Interspace['maintainer']))$this->error('无权限');
+        }
+        $data = $Request->post();
+        # 查询是否已经有对应的系统名称
+        $res = DeploySystemModel::table()->where(['interspace_id'=>$data['interspace_id'],'name'=>$data['name']])->fetch();
+        if (!empty($res)){ $this->error('空间下已经有名称为'.$data['name'].'的系统！');}
+        # 处理主机分组信息
+        if (empty($data['host_group']) || $data['host_group'] ==[[]]){
+            $this->error('主机分组是必须的');
+        }
+        foreach ($data['host_group'] as $value){
+            $host_group[] = $value['value'];
+        }
+        $data['host_group'] = $host_group;
+        # 处理域名信息
+        $data['domain'] = explode(',',$data['domain']);
+        # 判断域名合法性？
+
+        # 写入信息
+        $this->succeed($res = DeploySystemModel::table()->add($data),'操作成功');
+
+    }
+
+
     /**
      * @Author pizepei
      * @Created 2019/8/25 22:40
