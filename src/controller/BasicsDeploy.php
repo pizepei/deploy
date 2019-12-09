@@ -638,7 +638,17 @@ class BasicsDeploy extends Controller
      *      path [object] 路径参数
      *           id [uuid] 空间ID
      * @return array [json]
-     *      data [raw]
+     *      data [object]
+     *          list [objectList]
+     *              interspace_id [uuid] 空间ID
+     *              name [string required] 系统名称
+     *              explain [string required] 备注说明
+     *              domain [raw] 域名
+     *              run_pattern [string required] 运行模式
+     *              service_module [raw]  依赖的模块包
+     *              host_group [raw] 主机分组信息w
+     *                  value [uuid] 主机分组id
+     *              status [int] 1停用2、正常3、维护4、等待5、异常
      * @title  空间下的系统列表
      * @explain 空间下的系统列表
      * @router get system-list/:id[uuid]
@@ -654,6 +664,15 @@ class BasicsDeploy extends Controller
         }
         # 查询空间下的系统
         $data = DeploySystemModel::table()->where(['interspace_id'=>$Request->path('id')])->fetchAll();
+        if (!empty($data)){
+            foreach ($data as &$datum) {
+                # $data
+//                $datum['']
+            }
+        }
+
+        
+        
         $this->succeed(['list'=>$data]);
     }
 
@@ -666,7 +685,7 @@ class BasicsDeploy extends Controller
      *          explain [string required] 备注说明
      *          domain [string required] 域名
      *          run_pattern [string required] 运行模式
-     *          service_module [rae]  依赖的模块包
+     *          service_module [raw]  依赖的模块包
      *          host_group [objectList] 主机分组信息
      *              value [uuid] 主机分组id
      *          status [int] 1停用2、正常3、维护4、等待5、异常
