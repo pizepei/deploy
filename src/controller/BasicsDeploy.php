@@ -654,7 +654,7 @@ class BasicsDeploy extends Controller
         }
         # 查询空间下的系统
         $data = DeploySystemModel::table()->where(['interspace_id'=>$Request->path('id')])->fetchAll();
-        $this->succeed($data);
+        $this->succeed(['list'=>$data]);
     }
 
 
