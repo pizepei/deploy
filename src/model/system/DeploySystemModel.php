@@ -25,6 +25,9 @@ class DeploySystemModel extends Model
         'interspace_id'=>[
             'TYPE'=>'uuid', 'DEFAULT'=>'', 'COMMENT'=>'空间id',
         ],
+        'code'=>[
+            'TYPE'=>'varchar(128)', 'DEFAULT'=>false, 'COMMENT'=>'随机生成系统标识字母和数字',
+        ],
         'name'=>[
             'TYPE'=>'varchar(200)', 'DEFAULT'=>'', 'COMMENT'=>'系统名称',
         ],
@@ -63,7 +66,8 @@ class DeploySystemModel extends Model
         ],
         'INDEX'=>[
             ['TYPE'=>'UNIQUE','FIELD'=>'name,interspace_id','NAME'=>'name,interspace_id','USING'=>'BTREE','COMMENT'=>'name,interspace_id'],
-        ],
+            ['TYPE'=>'UNIQUE','FIELD'=>'code','NAME'=>'code','USING'=>'BTREE','COMMENT'=>'code'],
+            ],
         'PRIMARY'=>'id',//主键
     ];
     /**

@@ -640,13 +640,16 @@ class BasicsDeploy extends Controller
      * @return array [json]
      *      data [object]
      *          list [objectList]
+     *              id [uuid] 系统id
      *              interspace_id [uuid] 空间ID
      *              name [string required] 系统名称
+     *              code [string] 系统标识
      *              explain [string required] 备注说明
+     *              creation_time [string] 创建时间
      *              domain [raw] 域名
      *              run_pattern [string required] 运行模式
      *              service_module [raw]  依赖的模块包
-     *              host_group [raw] 主机分组信息w
+     *              host_group [raw] 主机分组信息
      *                  value [uuid] 主机分组id
      *              status [int] 1停用2、正常3、维护4、等待5、异常
      * @title  空间下的系统列表
@@ -671,11 +674,26 @@ class BasicsDeploy extends Controller
             }
         }
 
-        
-        
         $this->succeed(['list'=>$data]);
     }
-
+    /**
+     * @Author pizepei
+     * @Created 2019/8/25 22:40
+     * @param \pizepei\staging\Request $Request
+     *      path [object]
+     *          id [uuid] 系统id
+     * @title  删除部署系统
+     * @explain 删除部署系统
+     * @throws \Exception
+     * @baseAuth UserAuth:test
+     * @return array [json]
+     *      data [raw]
+     * @router delete system/:id[uuid]
+     */
+    public function deleteSystem(Request $Request)
+    {
+        return $this->succeed(BasicDeploySerice::delSystem($this->UserInfo['id'],$Request->path('id')),'删除成功');
+    }
 
     /**
      * @param \pizepei\staging\Request $Request
@@ -716,15 +734,83 @@ class BasicsDeploy extends Controller
             $host_group[] = $value['value'];
         }
         $data['host_group'] = $host_group;
+        #依赖的模块包service_module
+        foreach ($data['service_module'] as &$value)
+        {
+            $value = json_decode($value,true);
+        }
+        # 处理域名信息
+        $data['domain'] = explode(',',$data['domain']);
+
+        # 判断域名合法性？
+        foreach ($data['domain'] as $domain)
+        {
+            preg_match('/[\/]/s',$domain,$domainRes);
+            if (!empty($domainRes)){$this->error('域名不需要http或者/格式错误');}
+        }
+        # 生成code
+        $data['code'] = Helper()->str()->str_rand(5);
+        # 写入信息
+        $this->succeed(DeploySystemModel::table()->add($data),'操作成功');
+    }
+    /**
+     * @param \pizepei\staging\Request $Request
+     *      raw [object] 路径参数
+     *          id [uuid] 系统id
+     *          interspace_id [uuid] 空间ID
+     *          name [string required] 系统名称
+     *          explain [string required] 备注说明
+     *          domain [string required] 域名
+     *          run_pattern [string required] 运行模式
+     *          service_module [raw]  依赖的模块包
+     *          host_group [objectList] 主机分组信息
+     *              value [uuid] 主机分组id
+     *          status [int] 1停用2、正常3、维护4、等待5、异常
+     * @return array [json]
+     *      data [raw]
+     * @title  空间下添加系统
+     * @explain 空间下添加系统
+     * @router put system/:id[uuid]
+     * @throws \Exception
+     */
+    public function updateSystemList(Request $Request)
+    {
+        # 查询空间信息判断是否有查看权限
+        $Interspace = DeployInterspaceModel::table()->get($Request->raw('interspace_id'));
+        if (empty($Interspace)) $this->error('空间不存在');
+        if ($Interspace['owner'] !==$this->UserInfo['id']){
+            if (!in_array($this->UserInfo['id'],$Interspace['maintainer']))$this->error('无权限');
+        }
+        $data = $Request->raw();
+        # 查询是否已经有对应的系统名称
+        $res = DeploySystemModel::table()->where(['interspace_id'=>$data['interspace_id'],'id'=>$Request->path('id')])->fetch();
+        if (!empty($res)){ $this->error('空间下已经有名称为'.$data['name'].'的系统！');}
+        # 处理主机分组信息
+        if (empty($data['host_group']) || $data['host_group'] ==[[]]){
+            $this->error('主机分组是必须的');
+        }
+        foreach ($data['host_group'] as $value){
+            $host_group[] = $value['value'];
+        }
+        $data['host_group'] = $host_group;
+        #依赖的模块包service_module
+        foreach ($data['service_module'] as &$value)
+        {
+            $value = json_decode($value,true);
+        }
         # 处理域名信息
         $data['domain'] = explode(',',$data['domain']);
         # 判断域名合法性？
+        foreach ($data['domain'] as $domain)
+        {
+            preg_match('/[\/]/s',$domain,$domainRes);
+            if (!empty($domainRes)){$this->error('域名不需要http或者/格式错误');}
+        }
+        unset($data['interspace_id']);
 
         # 写入信息
-        $this->succeed($res = DeploySystemModel::table()->add($data),'操作成功');
-
+        $this->succeed(DeploySystemModel::table()->where(['id'=>$Request->path('id')])->update($data),'操作成功');
     }
-
 
     /**
      * @Author pizepei
