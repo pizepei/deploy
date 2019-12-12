@@ -16,6 +16,7 @@ use pizepei\deploy\LocalDeployServic;
 use pizepei\deploy\model\DeployServerConfigModel;
 use pizepei\deploy\model\DeployServerGroupModel;
 use pizepei\deploy\model\DeployServerRelevanceModel;
+use pizepei\deploy\model\GitlabAccountModel;
 use pizepei\deploy\model\system\DeploySystemModel;
 use pizepei\deploy\model\interspace\DeployInterspaceModel;
 use pizepei\deploy\service\BasicDeploySerice;
@@ -91,6 +92,8 @@ class BasicsDeploy extends Controller
      */
     public function cliDbInitStructure(Request $Request)
     {
+        ignore_user_abort();
+        set_time_limit(500);
         # 命令行没事 saas
         $model = TableAlterLogModel::table();
         # 同步表结构
@@ -249,18 +252,34 @@ class BasicsDeploy extends Controller
     public function test(Request $Request)
     {
         # 尝试连接vps
-
+        ignore_user_abort();
+        set_time_limit(500);
+        # 获取项目信息
+        $accoun = GitlabAccountModel::table()->get('94E0C248-783F-3D54-B435-2A799ACFF4E4');
+        # 获取项目信息
+        $normative = [
+            'ssh_url'=>'git@github.com:pizepei/normative.git',
+            'sha'=>'update',
+            'name'=>'normative'
+        ];
+        $DeployService = new DeployService();
+        return $this->succeed($DeployService->sshProjectBuild(\Deploy::buildServer,[[
+            'host'      => '107.172.**.***',
+            'port'      => 22,
+            'username'  => 'root',
+            'path'      =>'/root/',
+        ]],$normative));
+//        SshProjectBuild
         # 尝试进行构建  git  composer
 
-        $reflect = new \ReflectionClass('pizepei\config\Config');
-        $reflect = new \ReflectionClass('pizepei\deploy\controller\BasicsDeploy');
+//        $reflect = new \ReflectionClass('pizepei\config\Config');
+//        $reflect = new \ReflectionClass('pizepei\deploy\controller\BasicsDeploy');
 
 //        foreach ($reflect->getConstants() as $key=>$value){
 //            var_dump($reflect->getConstant($key));
 ////            var_dump($key->getDocComment());
 //        }
 
-        return $reflect->getConstructor();
 
 
 
