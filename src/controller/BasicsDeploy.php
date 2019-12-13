@@ -252,71 +252,8 @@ class BasicsDeploy extends Controller
      */
     public function test(Request $Request)
     {
-        # 尝试连接vps
-        ignore_user_abort();
-        set_time_limit(500);
-        # 获取项目信息
-        $accoun = GitlabAccountModel::table()->get('94E0C248-783F-3D54-B435-2A799ACFF4E4');
-        # 获取项目信息
-        $normative = [
-            'ssh_url'=>'git@github.com:pizepei/normative.git',
-            'sha'=>'update',
-            'name'=>'normative'
-        ];
-        $DeployService = new DeployService();
-        return $this->succeed($DeployService->sshProjectBuild(\Deploy::buildServer,[[
-            'host'      => '107.172.89.191',
-            'port'      => 22,
-            'username'  => 'root',
-            'path'      =>'/root/',
-        ]],$normative));
-//        SshProjectBuild
-        # 尝试进行构建  git  composer
-
-//        $reflect = new \ReflectionClass('pizepei\config\Config');
-//        $reflect = new \ReflectionClass('pizepei\deploy\controller\BasicsDeploy');
-
-//        foreach ($reflect->getConstants() as $key=>$value){
-//            var_dump($reflect->getConstant($key));
-////            var_dump($key->getDocComment());
-//        }
 
 
-
-
-//        return $this->view('ace');
-        /**
-         * MicroServiceConfigCenterModel
-         */
-//        $MicroServiceConfigCenter = MicroServiceConfigCenterModel::table();
-//        $InitializeConfig = new InitializeConfig();
-//        $Config = $InitializeConfig->get_const('config\app\SetConfig');
-//        $dbtabase = $InitializeConfig->get_const('config\app\SetDbtabase');
-//        $error_log = $InitializeConfig->get_const('config\app\SetErrorOrLog');
-//
-//
-//        $deploy = $InitializeConfig->get_deploy_const('..'.DIRECTORY_SEPARATOR.'config'.DIRECTORY_SEPARATOR);
-//        $data = [
-//            'name'              =>'测试',
-//            'appid'             =>$deploy['INITIALIZE']['appid'],
-//            'service_group'     =>'develop',
-//            'ip_white_list'     =>['47.106.89.196'],
-//            'config'            =>$Config,
-//            'dbtabase'          =>$dbtabase,
-//            'error_or_log'      =>$error_log,
-//            'deploy'            =>$deploy,
-//            'domain'            =>$_SERVER['HTTP_HOST'],
-//        ];
-//
-//        return $MicroServiceConfigCenter->add($data);
-        $LocalDeployServic = new LocalDeployServic();
-        $data=[
-            'ProcurementType'=>'ErrorOrLogConfig',//获取类型   Config.php  Dbtabase.php  ErrorOrLogConfig.php
-            'appid'=>\Deploy::INITIALIZE['appid'],//项目标识
-            'domain'=>$_SERVER['HTTP_HOST'],//当前域名
-            'time'=>time(),//
-        ];
-        return $LocalDeployServic->getConfigCenter($data);
 
     }
 
