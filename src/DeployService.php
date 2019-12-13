@@ -566,7 +566,7 @@ class DeployService
     {
         # 设置为不超时
         ignore_user_abort();
-        set_time_limit(600);
+        set_time_limit(1200);
         # 准备目录
         $name = explode(':',$gitInfo['ssh_url']);
         $name = end($name);//获取分支名称
@@ -578,8 +578,10 @@ class DeployService
         $Shell[] = ['mkdir -p '.$buildPath,5];
         $Shell[] = 'cd /deploy/build/'.$name;
         $Shell[] = 'echo 目录下历史记录：';
-        $Shell[] = ['pwd'];
-        $Shell[] = ['ll'];
+        $Shell[] = 'pwd';
+        $Shell[] = 'll';
+        $Shell[] = 'sleep 3';
+
         # 进入目录
         $Shell[] = ['cd '.$buildPath,2];
         $Shell[] = 'echo clone项目：'.$gitInfo['ssh_url'];
@@ -595,17 +597,28 @@ class DeployService
         if ($gitInfo['sha'] !=='update'){
             $Shell[] = 'echo 切换到对应的sha版本：'.$gitInfo['sha'];
             $Shell[] = ['git checkout '.$gitInfo['sha'],5];
-            $Shell[] = 'echo PHP项目进行：composer install';
-            $Shell[] = ['composer install  --no-dev',466];
+            # 针对性构建
+            if ($gitInfo['type'] === 'php'){
+                $Shell[] = 'echo PHP项目进行：composer install';
+                $Shell[] = ['composer install  --no-dev',466];
+            }else if ($gitInfo['type'] === 'html'){
 
+            }
         }elseif ($gitInfo['sha'] ==='update'){
-            $Shell[] = 'echo PHP项目进行：composer update';
-            $Shell[] = ['composer update',110];
+            # 针对性构建
+            if ($gitInfo['type'] === 'php'){
+                $Shell[] = 'echo PHP项目进行：composer update';
+                $Shell[] = ['composer update',110];
+            }else if ($gitInfo['type'] === 'html'){
+
+            }
         }
         # 执行构压缩命令tar czvf filename.tar dirname
         $Shell[] = 'cd ..';     # 返回上级目录
         $Shell[] = 'echo 压缩项目文件：';
-        $Shell[] = ['tar czvf '.$gitInfo['name'].'.tar '.$gitInfo['name'],135];  # 进行压缩
+        $Shell[] = 'sleep 3';
+
+        $Shell[] = ['tar czvf '.$gitInfo['name'].'.tar '.$gitInfo['name'].'  > '.$gitInfo['name'].'.log',135];  # 进行压缩
         # 复制压缩包到目标服务器scp -P 22    /deploy/build/pizepei/normative.git/2019_12-12__15_49_43/update/normative.tar    root@107.172.***.**:/root/normative.tar
         foreach ($serverGroup as $value)
         {
@@ -613,11 +626,16 @@ class DeployService
             $Shell[] = ['scp -P '.$value['port'].' /deploy/build/'.$name.'/'.$date.'/'.$gitInfo['sha'].'/'.$gitInfo['name'].'.tar '.$value['username'].'@'.$value['host'].':'.$value['path'].$gitInfo['name'].'.tar',120];
             $xtermSon[md5($value['host'])] = $value['host'];
         }
+        $Shell[] = 'sleep 3';
         $Shell[] = 'pwd';
         /**
          * 连接宿主机 parasitifer 进行构建
          */
         $parasitiferSSH = new Ssh2($BuildServerSsh);
+
+//        $Shell = ['pwd'];
+
+
         # 拼接发送命令
         $ShellRes = $parasitiferSSH->jointFwriteXterm($Shell);
         $wjt = [
@@ -638,26 +656,29 @@ class DeployService
         foreach ($parasitiferSSH->directFgetsXterm($parasitiferSSH,$ShellRes['jointShell'],$ShellRes['time']) as $value){
            $Client->sendUser($userId,['msg'=>'数据接收中','content'=>$value??'','type'=>'buildDeploy']);
         }
+        $Client->sendUser($userId, [
+            'msg' => '启动新窗口',
+            'content' => '****************************开始连接集群主机****************************',
+            'type' => 'buildDeploy',
+        ]);
         # 主项目构建完成 分别进入目标主机 继续构建
         foreach ($serverGroup as $value) {
-            $targetSSH = new Ssh2($value);
-            $id = md5($value['host']);
             $Client->sendUser($userId, [
                 'msg' => '启动新窗口',
-                'content' => '启动新窗口',
-                'type' => 'newTargetSSH',
-                'name' => $value['name'],
-                'host' => $value['host'],
-                'id' =>$id
+                'content' => '**************连接主机：'.$value['name'].'['.$value['host'].'] 成功 *****************',
+                'type' => 'buildDeploy',
             ]);
+            $targetSSH = new Ssh2($value);
+
             # 连接目标目标主机
-            $targetShell[] = 'll';
+            $targetShell[] = 'ls';
+
             # 解压文件到目标目录
             # 进入目标目录
             # 设置文件权限
             $targetRes = $targetSSH->jointFwriteXterm($targetShell);
             foreach ($targetSSH->directFgetsXterm($targetSSH,$targetRes['jointShell'],$targetRes['time']) as $targetValue){
-                $Client->sendUser($userId,['msg'=>'数据接收中','content'=>$targetValue??'','type'=>'contentTargetSSH','id'=>$id]);
+                $Client->sendUser($userId,['msg'=>'数据接收中','content'=>$targetValue??'----','type'=>'buildDeploy']);
             }
         }
     }

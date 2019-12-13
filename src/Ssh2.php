@@ -171,18 +171,18 @@ class Ssh2
         $time = time();
         $maxTime = time();
         while(time()-$time < $max || time()-$maxTime <$astrict) {
-            usleep(30000);
+            usleep(50000);
             $fgets = fgets($parasitiferShell);
             if(!empty($fgets))
-            {        $pattern = '/Last failed login:(.*?)/s';
-                if (preg_match($this->pattern,$fgets) !== 0 && preg_match($pattern,$fgets) ===0 ){
-                    $max = 0;
-                    yield '命令行执行完毕';
+            {
+                if (preg_match($this->pattern,$fgets) !== 0 ){
+                    break;
+                    yield $fgets.':命令行执行完毕';
                 }else{
                     $maxTime = time();
                     yield $fgets;
                 }
-
+            }else{
             }
         }
     }
@@ -201,10 +201,10 @@ class Ssh2
         {
             if (is_array($value) && !empty($value)){
                 $jointShell .= $value[0].'  &&  ';
-                $time += $value[1]??3;
+                $time += $value[1]??10;
             }else{
                 $jointShell .= $value.'  &&  ';
-                $time += 3;
+                $time += 10;
             }
         }
         $jointShell = rtrim($jointShell,'  &&  ');

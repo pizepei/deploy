@@ -847,17 +847,19 @@ class BasicsDeploy extends Controller
     {
         # 尝试连接vps
         ignore_user_abort();
-        set_time_limit(500);
+        set_time_limit(600);
         # 获取项目信息
         $accoun = GitlabAccountModel::table()->get('94E0C248-783F-3D54-B435-2A799ACFF4E4');
         # 获取项目信息
         $normative = [
             'ssh_url'=>'git@github.com:pizepei/normative.git',
             'sha'=>'update',
-            'name'=>'normative'
+            'name'=>'normative',
+            'type'=>'php'
         ];
         $Serverdata = DeployServerConfigModel::table()->where(['group_id'=>'8DEA40AB-9056-E89F-6AED-3BE5FB3C7D8F'])->fetchAll();
         if (empty($Serverdata)){$this->error('没有服务器');}
+        # 处理服务器数据
         foreach ($Serverdata as &$value)
         {
             $value['username'] = $value['ssh2_user'];
@@ -867,7 +869,7 @@ class BasicsDeploy extends Controller
             $value['path'] = '/root/';
         }
         $DeployService = new DeployService();
-        return $this->succeed($DeployService->deployBuildSocket(\Deploy::buildServer,$Serverdata,$normative,$this->UserInfo['id']));
+        return $this->succeed([$DeployService->deployBuildSocket(\Deploy::buildServer,$Serverdata,$normative,$this->UserInfo['id']),$Serverdata]);
 
     }
 
