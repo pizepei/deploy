@@ -615,7 +615,7 @@ class DeployService
         }
         # 执行构压缩命令tar czvf filename.tar dirname
         $Shell[] = 'cd ..';     # 返回上级目录
-        $Shell[] = 'echo 压缩项目文件：';
+        $Shell[] = 'echo 压缩项目文件：'.$gitInfo['name'].'.tar ';
         $Shell[] = 'sleep 3';
 
         $Shell[] = ['tar czvf '.$gitInfo['name'].'.tar '.$gitInfo['name'].'  > '.$gitInfo['name'].'.log',135];  # 进行压缩
@@ -632,9 +632,6 @@ class DeployService
          * 连接宿主机 parasitifer 进行构建
          */
         $parasitiferSSH = new Ssh2($BuildServerSsh);
-
-//        $Shell = ['pwd'];
-
 
         # 拼接发送命令
         $ShellRes = $parasitiferSSH->jointFwriteXterm($Shell);
@@ -671,7 +668,7 @@ class DeployService
             $targetSSH = new Ssh2($value);
 
             # 连接目标目标主机
-            $targetShell[] = 'ls';
+            $targetShell[] = 'll';
 
             # 解压文件到目标目录
             # 进入目标目录
