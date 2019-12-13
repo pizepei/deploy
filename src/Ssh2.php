@@ -156,6 +156,62 @@ class Ssh2
 
     /**
      * @Author 皮泽培
+     * @Created 2019/12/13 11:23
+     * @param ssh2 $shell
+     * @param string $command  命令行
+     * @param int $astrict 从上次单位响应开始没有响应的时  如果超过就结束循环默认5分钟
+     * @param int $max 最大无响应时间12000
+     * @title  直接返回数据给webSocket
+     * @explain 直接返回数据给webSocket
+     */
+    public function directFgetsXterm(ssh2 $shell,string $command,$astrict=300,$max=1200)
+    {
+        $parasitiferShell = $shell->ssh2_shell_xterm();
+        $this->fwriteXterm($parasitiferShell,$command);
+        $time = time();
+        $maxTime = time();
+        while(time()-$time < $max || time()-$maxTime <$astrict) {
+            usleep(30000);
+            $fgets = fgets($parasitiferShell);
+            if(!empty($fgets))
+            {        $pattern = '/Last failed login:(.*?)/s';
+                if (preg_match($this->pattern,$fgets) !== 0 && preg_match($pattern,$fgets) ===0 ){
+                    $max = 0;
+                    yield '命令行执行完毕';
+                }else{
+                    $maxTime = time();
+                    yield $fgets;
+                }
+
+            }
+        }
+    }
+    /**
+     * @Author pizepei
+     * @Created 2019/6/19 22:13
+     * @param string $command
+     * @title  拼接输入命令
+     * @explain Xterm输入命令
+     */
+    public function jointFwriteXterm(array  $command):array
+    {
+        $jointShell = '';
+        $time = 1;
+        foreach ($command as $value)
+        {
+            if (is_array($value) && !empty($value)){
+                $jointShell .= $value[0].'  &&  ';
+                $time += $value[1]??3;
+            }else{
+                $jointShell .= $value.'  &&  ';
+                $time += 3;
+            }
+        }
+        $jointShell = rtrim($jointShell,'  &&  ');
+        return ['jointShell'=>$jointShell,'time'=>$time];
+    }
+    /**
+     * @Author 皮泽培
      * @Created 2019/6/26 14:13
      * @param string $local_file
      * @param string $remote_file

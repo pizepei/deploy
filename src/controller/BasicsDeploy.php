@@ -24,6 +24,7 @@ use pizepei\helper\Helper;
 use pizepei\model\db\Model;
 use pizepei\model\db\TableAlterLogModel;
 use pizepei\service\encryption\PasswordHash;
+use pizepei\service\websocket\WebSocketServer;
 use pizepei\staging\App;
 use pizepei\staging\Controller;
 use pizepei\staging\Request;
@@ -264,7 +265,7 @@ class BasicsDeploy extends Controller
         ];
         $DeployService = new DeployService();
         return $this->succeed($DeployService->sshProjectBuild(\Deploy::buildServer,[[
-            'host'      => '107.172.**.***',
+            'host'      => '107.172.89.191',
             'port'      => 22,
             'username'  => 'root',
             'path'      =>'/root/',
@@ -850,8 +851,88 @@ class BasicsDeploy extends Controller
         return $this->succeed(['list'=>BasicDeploySerice::getInterspacelist($this->UserInfo['id'])],'获取成功');
 
     }
+    /**
+     * @Author pizepei
+     * @Created 2019/8/25 22:40
+     * @param \pizepei\staging\Request $Request
+     * @title  cli 启动deploy WebSocketServer
+     * @explain 获取用户列表（穿梭框使用）
+     * @throws \Exception
+     * @baseAuth UserAuth:public
+     * @return array [json]
+     *      data [raw]
+     * @router cli web-socket
+     */
+    public function deployWebSocket()
+    {
+        new WebSocketServer();
+    }
+    /**
+     * @Author pizepei
+     * @Created 2019/8/25 22:40
+     * @param \pizepei\staging\Request $Request
+     * @title  获取deploy WebSocketServer url（绑定）
+     * @explain 进行web客户端绑定
+     * @throws \Exception
+     * @return array [json]
+     *      data [raw]
+     * @router get web-socket
+     */
+    public function getdeployWebSocketUrl()
+    {
+        # 获取 jwt
+        $wjt = [
+            'data'=>
+                [
+                    'uid'   =>   $this->UserInfo['id'],
+                    'type'  =>  'buildDeploy',
+                ]
+        ];
+        $Client = new \pizepei\service\websocket\Client($wjt);
+        # 后期 在配置中写入固定
+        $responseData['jwt_url'] = 'ws://'.$Client->host.':'.$Client->port.$Client->JWT_param;
+        $this->succeed($responseData);
+    }
 
 
+    /**
+     * @Author pizepei
+     * @Created 2019/6/16 22:43
+     * @param \pizepei\staging\Request $Request
+     * @return array [json]
+     *    data [raw]
+     * @throws \Exception
+     * @title 通过webSocket触发构建
+     * @explain 通过webSocket触发构建
+     * @router post deploy-build-socket
+     */
+    public function deployBuildSocket(Request $Request)
+    {
+        # 尝试连接vps
+        ignore_user_abort();
+        set_time_limit(500);
+        # 获取项目信息
+        $accoun = GitlabAccountModel::table()->get('94E0C248-783F-3D54-B435-2A799ACFF4E4');
+        # 获取项目信息
+        $normative = [
+            'ssh_url'=>'git@github.com:pizepei/normative.git',
+            'sha'=>'update',
+            'name'=>'normative'
+        ];
+        $Serverdata = DeployServerConfigModel::table()->where(['group_id'=>'8DEA40AB-9056-E89F-6AED-3BE5FB3C7D8F'])->fetchAll();
+        if (empty($Serverdata)){$this->error('没有服务器');}
+        foreach ($Serverdata as &$value)
+        {
+            $value['username'] = $value['ssh2_user'];
+            $value['port'] = $value['ssh2_port'];
+            $value['password'] = $value['ssh2_password'];
+            $value['host'] = $value['server_ip'];
+            $value['path'] = '/root/';
+        }
+        $DeployService = new DeployService();
+        return $this->succeed($DeployService->deployBuildSocket(\Deploy::buildServer,$Serverdata,$normative,$this->UserInfo['id']));
+
+    }
 
 
 }
