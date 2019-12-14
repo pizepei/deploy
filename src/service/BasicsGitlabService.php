@@ -33,10 +33,11 @@ class BasicsGitlabService
      * @param string $data
      * @param string $token
      * @param string $tokenType  private[PRIVATE-TOKEN]     access[access_token]
+     * @param bool $Exception
      * @return mixed
      * @throws \Exception
      */
-    public function apiRequest($account_id,$api,$data='',$token='',$tokenType='private')
+    public function apiRequest($account_id,$api,$data='',$token='',$tokenType='private',bool $Exception=true)
     {
         if ($token ==''){
             # 获取当前账号的  PRIVATE-TOKEN
@@ -49,7 +50,10 @@ class BasicsGitlabService
         $url = 'https://gitlab.heil.top/api/v3/'.$api;
         $res = Helper::init()->httpRequest($url,$data,$parameter);
         if ($res['code'] !== 200){
-            throw new \Exception(self::ERROR_CODE[$res['code']]??'请求错误');
+            if ($Exception){
+                error((self::ERROR_CODE[$res['code']]??'请求错误').$url);
+            }
+            return false;
         }
         $Helper = Helper::init()::arrayList()->array_explode_value($res['header'],': ',true);
         $body = Helper::init()->json_decode($res['body']);

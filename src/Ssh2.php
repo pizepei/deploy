@@ -37,7 +37,7 @@ class Ssh2
             $this->config = array_merge($this->config,$config);
         }
         /**
-         * 配置
+         * 配置 [root@DecisiveFew-VM ~]#
          */
         $this->pattern = '/\['.$this->config['username'].'@(.*?)\]\# $/s';
 
@@ -170,13 +170,17 @@ class Ssh2
         $this->fwriteXterm($parasitiferShell,$command);
         $time = time();
         $maxTime = time();
+        $break = false;
         while(time()-$time < $max || time()-$maxTime <$astrict) {
             usleep(50000);
             $fgets = fgets($parasitiferShell);
+            if ($break){
+                break;
+            }
             if(!empty($fgets))
             {
                 if (preg_match($this->pattern,$fgets) !== 0 ){
-                    break;
+                    $break = true;
                     yield $fgets.':命令行执行完毕';
                 }else{
                     $maxTime = time();

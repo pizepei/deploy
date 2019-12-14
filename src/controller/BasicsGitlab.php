@@ -231,13 +231,47 @@ class BasicsGitlab extends Controller
         $service = new BasicsGitlabService();
         if ($Request->path('id') ===0){
             # 列出所有项目
-            return $this->succeed( $service->apiRequest($this->UserInfo['id'],'projects/all'),'获取成功');
+            return $this->succeed( $service->apiRequest($this->UserInfo['id'],'projects/all'),'获取项目列表成功');
         }elseif ($Request->path('id') ===999999999){
             # 获取加星项目
-            return $this->succeed( $service->apiRequest($this->UserInfo['id'],'projects/starred'),'获取成功');
+            return $this->succeed( $service->apiRequest($this->UserInfo['id'],'projects/starred'),'获取项目列表成功');
         }
-        return $this->succeed( $service->apiRequest($this->UserInfo['id'],'groups/'.$Request->path('id').'/projects'),'获取成功');
+        return $this->succeed( $service->apiRequest($this->UserInfo['id'],'groups/'.$Request->path('id').'/projects'),'获取项目列表成功');
     }
+    /**
+     * @param \pizepei\staging\Request $Request
+     *      path [object] 路径参数
+     *           id [int] 项目id
+     * @return array [json]
+     *      data [raw]
+     * @title  获取项目下分支列表
+     * @explain 群组下项目列表
+     * @router get projects/:id[int]/repository/branches-list
+     * @throws \Exception
+     */
+    public function projectsRepositoryBranchesList(Request $Request)
+    {
+        $service = new BasicsGitlabService();
+        return $this->succeed( $service->apiRequest($this->UserInfo['id'],'projects/'.$Request->path('id').'/repository/branches'),'获取分支成功');
+    }
+    /**
+     * @param \pizepei\staging\Request $Request
+     *      path [object] 路径参数
+     *           id [int] 项目id
+     *           refName [string] 分支
+     * @return array [json]
+     *      data [raw]
+     * @title  列出存储库提交
+     * @explain 列出存储库提交
+     * @router get projects/:id[int]/repository/commits/:refName[string]
+     * @throws \Exception
+     */
+    public function projectsRepositoryCommits(Request $Request)
+    {
+        $service = new BasicsGitlabService();
+        return $this->succeed( $service->apiRequest($this->UserInfo['id'],'projects/'.$Request->path('id').'/repository/commits?per_page=100&ref_name='.$Request->path('refName')),'获取commits成功');
+    }
+
 
 
     /**

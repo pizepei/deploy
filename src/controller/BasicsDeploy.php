@@ -20,6 +20,7 @@ use pizepei\deploy\model\GitlabAccountModel;
 use pizepei\deploy\model\system\DeploySystemModel;
 use pizepei\deploy\model\interspace\DeployInterspaceModel;
 use pizepei\deploy\service\BasicDeploySerice;
+use pizepei\deploy\service\BasicsGitlabService;
 use pizepei\helper\Helper;
 use pizepei\model\db\Model;
 use pizepei\model\db\TableAlterLogModel;
@@ -253,7 +254,11 @@ class BasicsDeploy extends Controller
     public function test(Request $Request)
     {
 
+        $Deploy = $this->app->InitializeConfig()->get_const('\Deploy');
 
+        $str = $this->app->InitializeConfig()->setConfigString('Deploy',$Deploy,'','Deploy');
+        echo $str;
+//        $this->succeed($str);
 
     }
 
@@ -725,8 +730,8 @@ class BasicsDeploy extends Controller
      *          status [int] 1停用2、正常3、维护4、等待5、异常
      * @return array [json]
      *      data [raw]
-     * @title  空间下添加系统
-     * @explain 空间下添加系统
+     * @title  空间下修改系统
+     * @explain 空间下修改系统
      * @router put system/:id[uuid]
      * @throws \Exception
      */
@@ -769,6 +774,48 @@ class BasicsDeploy extends Controller
         $this->succeed(DeploySystemModel::table()->where(['id'=>$Request->path('id')])->update($data),'操作成功');
     }
 
+
+
+    /**
+     * @param \pizepei\staging\Request $Request
+     *      raw [object] 路径参数
+     *          id [uuid] 系统id
+     * @return array [json]
+     *      data [raw]
+     *          id [uuid] 系统id
+     *          interspace_id [uuid] 空间ID
+     *          name [string required] 系统名称
+     *          explain [string required] 备注说明
+     *          domain [string required] 域名
+     *          run_pattern [string required] 运行模式
+     *          service_module [raw]  依赖的模块包
+     *          host_group [objectList] 主机分组信息
+     *              value [uuid] 主机分组id
+     *          status [int] 1停用2、正常3、维护4、等待5、异常
+     * @title  获取系统详情
+     * @explain 获取系统详情
+     * @router get system/:id[uuid]
+     * @throws \Exception
+     */
+    public function getSystemInfo(Request $Request)
+    {
+        # 通过系统id查询空间信息
+        $System = DeploySystemModel::table()->get($Request->path('id'));
+
+        # 查询空间信息判断是否有查看权限
+        $Interspace = DeployInterspaceModel::table()->get($System['interspace_id']);
+        if (empty($Interspace)) $this->error('空间不存在');
+        if ($Interspace['owner'] !==$this->UserInfo['id']){
+            if (!in_array($this->UserInfo['id'],$Interspace['maintainer']))$this->error('无权限');
+        }
+        foreach ($System['service_module'] as &$value)
+        {
+            $value['log'] = false;
+        }
+        $this->succeed($System);
+    }
+
+
     /**
      * @Author pizepei
      * @Created 2019/8/25 22:40
@@ -786,24 +833,45 @@ class BasicsDeploy extends Controller
     {
         # 在编辑时通过空间id获取选中数据
         return $this->succeed(['list'=>BasicDeploySerice::getInterspacelist($this->UserInfo['id'])],'获取成功');
-
     }
     /**
      * @Author pizepei
      * @Created 2019/8/25 22:40
      * @param \pizepei\staging\Request $Request
-     * @title  cli 启动deploy WebSocketServer
-     * @explain 获取用户列表（穿梭框使用）
+     * @title  通过接口触发socket服务启动
+     * @explain 通过接口触发socket服务启动
      * @throws \Exception
-     * @baseAuth UserAuth:public
      * @return array [json]
      *      data [raw]
-     * @router cli web-socket
+     * @router get start-web-socket
      */
-    public function deployWebSocket()
+    public function startDeployWebSocket()
+    {
+        $cli = 'cd '.$this->app->DOCUMENT_ROOT.'public'.DIRECTORY_SEPARATOR.' && php index_cli.php --route /deploy/start-web-socket   --domain '.$_SERVER['HTTP_HOST'].'>/dev/null & )';
+        exec($cli,$res, $status);
+        if ($status){
+            $this->succeed([$res,$status,$cli],'操作成功');
+        }else{
+            $this->error('操作失败',0,[$res,$status,$cli]);
+        }
+    }
+
+    /**
+     * @Author pizepei
+     * @Created 2019/8/25 22:40
+     * @param \pizepei\staging\Request $Request
+     * @title  cli 启动deploy WebSocketServer
+     * @explain 启动WebSocketServer
+     * @throws \Exception
+     * @return array [json]
+     *      data [raw]
+     * @router cli start-web-socket
+     */
+    public function ClistartDeployWebSocket()
     {
         new WebSocketServer();
     }
+
     /**
      * @Author pizepei
      * @Created 2019/8/25 22:40
@@ -831,11 +899,15 @@ class BasicsDeploy extends Controller
         $this->succeed($responseData);
     }
 
-
     /**
      * @Author pizepei
      * @Created 2019/6/16 22:43
      * @param \pizepei\staging\Request $Request
+     *      post [object]
+     *          gitlab_id [int] gitlab_id
+     *          sha [string] 版本sha
+     *          system [uuid] 归属系统id
+     *          branch [string] 分支
      * @return array [json]
      *    data [raw]
      * @throws \Exception
@@ -848,19 +920,36 @@ class BasicsDeploy extends Controller
         # 尝试连接vps
         ignore_user_abort();
         set_time_limit(600);
-        # 获取项目信息
-        $accoun = GitlabAccountModel::table()->get('94E0C248-783F-3D54-B435-2A799ACFF4E4');
-        # 获取项目信息
-        $normative = [
-            'ssh_url'=>'git@github.com:pizepei/normative.git',
-            'sha'=>'update',
-            'name'=>'normative',
-            'type'=>'php'
+        # 通过系统id查询空间信息
+        $System = DeploySystemModel::table()->get($Request->post('system'));
+        if (!$System) $this->error('系统不存在');
+        # 查询空间信息判断是否有查看权限
+        $Interspace = DeployInterspaceModel::table()->get($System['interspace_id']);
+        if (empty($Interspace)) $this->error('空间不存在');
+        if ($Interspace['owner'] !==$this->UserInfo['id']){
+            if (!in_array($this->UserInfo['id'],$Interspace['maintainer']))$this->error('无权限');
+        }
+        # 通过gitlab_id 获取项目信息
+        $service = new BasicsGitlabService();
+        $gitProjects = $service->apiRequest($this->UserInfo['id'],'projects/'.$Request->post('gitlab_id'));
+        if (empty($gitProjects['list'])){ $this->error('项目不存在或者没有项目权限');}
+        $gitProjects = $gitProjects['list'];
+        $gitProjectsFiles = $service->apiRequest($this->UserInfo['id'],'projects/'.$Request->post('gitlab_id').'/repository/files?file_path=composer.json&ref='.$Request->post('branch'),'','','private',false);
+        $deployBuilGitInfo =  [
+            'ssh_url'   =>$gitProjects['ssh_url_to_repo'],
+            'sha'       =>'update',
+            'name'      =>$gitProjects['name'],
+            'type'      =>$gitProjectsFiles?'php':'html',
         ];
-        $Serverdata = DeployServerConfigModel::table()->where(['group_id'=>'8DEA40AB-9056-E89F-6AED-3BE5FB3C7D8F'])->fetchAll();
-        if (empty($Serverdata)){$this->error('没有服务器');}
-        # 处理服务器数据
-        foreach ($Serverdata as &$value)
+        # 获取远程生产运行主机信息
+        $ServerData = DeployServerConfigModel::table()
+            ->where(['group_id'=>[
+                'in',$System['host_group']]
+            ])
+            ->fetchAll();
+        if (empty($ServerData)){$this->error('没有远程生产运行主机信息');}
+        # 处理服务器数据 远程生产运行主机信息
+        foreach ($ServerData as &$value)
         {
             $value['username'] = $value['ssh2_user'];
             $value['port'] = $value['ssh2_port'];
@@ -868,9 +957,13 @@ class BasicsDeploy extends Controller
             $value['host'] = $value['server_ip'];
             $value['path'] = '/root/';
         }
-        $DeployService = new DeployService();
-        return $this->succeed([$DeployService->deployBuildSocket(\Deploy::buildServer,$Serverdata,$normative,$this->UserInfo['id']),$Serverdata]);
 
+        # Deploy.php配置信息
+        $Deploy = $this->app->InitializeConfig()->get_const('\Deploy');
+        $deployData['deployConfig'] = $this->app->InitializeConfig()->setConfigString('Deploy',$Deploy,'','Deploy');
+
+        $DeployService = new DeployService();
+        return $this->succeed([$DeployService->deployBuildSocket(\Deploy::buildServer,$ServerData,$deployBuilGitInfo,$this->UserInfo['id'],$deployData)]);
     }
 
 
