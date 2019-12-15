@@ -9,6 +9,7 @@
 
 namespace pizepei\deploy;
 
+use pizepei\model\cache\Cache;
 use function MongoDB\BSON\fromJSON;
 use pizepei\config\InitializeConfig;
 use pizepei\deploy\model\DeployServerConfigModel;
@@ -573,18 +574,22 @@ class DeployService
         # git checkout b0362a895d39061c0bc6f05c575af47de1b3f702
         $date = date('Y_m-d__H_i_s');
         $buildPath = '/deploy/build/'.$name.'/'.$date.'/'.$gitInfo['sha'];
-        # 创建目录
-        $Shell[] = 'echo 执行命令创建目录：'.$buildPath;
-        $Shell[] = ['mkdir -p '.$buildPath,5];
+        $deployBuildPath = '/deploy/build/'.$name;
+        # 创建目录 (项目目录)
+        $Shell[] = ['mkdir -p '.$deployBuildPath,5];
         $Shell[] = 'cd /deploy/build/'.$name;
         $Shell[] = 'echo 目录下历史记录：';
         $Shell[] = 'pwd';
         $Shell[] = 'll';
         $Shell[] = 'sleep 3';
-
+        # 创建带
+        $Shell[] = 'echo 执行命令创建目录：'.$buildPath;
+        $Shell[] = ['mkdir -p '.$buildPath,5];
         # 进入目录
-        $Shell[] = ['cd '.$buildPath,2];
-        $Shell[] = 'echo clone项目：'.$gitInfo['ssh_url'];
+        $Shell[] = 'cd '.$buildPath;
+        $Shell[] = 'pwd';
+
+        $Shell[] = 'echo 正在clone检出项目： '.$gitInfo['ssh_url'];
         # clone 项目
         $Shell[] = 'git clone -q '.$gitInfo['ssh_url'].' '.$gitInfo['name'];
         #    进入clone构建目录
@@ -641,10 +646,8 @@ class DeployService
         /**
          * 连接宿主机 parasitifer 进行构建
          */
-         $parasitiferSSH = new Ssh2($BuildServerSsh);
+        $SSHobject = new Ssh2($BuildServerSsh);
 
-        # 拼接发送命令
-        $ShellRes = $parasitiferSSH->jointFwriteXterm($Shell);
         # 连接webSocket
         $wjt = [
             'data'=>
@@ -656,41 +659,69 @@ class DeployService
         $Client = new Client($wjt);
         $Client->connect();
         $ClientInfo = $Client->exist($userId);
-
         if (!$ClientInfo){
             error('webSocket 不在线');
         }
+        $this->WSClient = $Client;
+        $this->WSuserId = $userId;
+
+        # 初始化 ssh
+        $SSHobject->wsInit($Client,$userId);
+
+
         echo Helper()->json_encode(['code'=>200,"msg"=>'开始构建'.$gitInfo['name'].'['.$gitInfo['type'].'] 项目','data'=>['xtermSon'=>$xtermSon]]);
+        $SSHobject->WSdirectFgetsXterm($Shell);
         fastcgi_finish_request();
-        foreach ($parasitiferSSH->directFgetsXterm($parasitiferSSH,$ShellRes['jointShell'],$ShellRes['time']) as $key =>$value){
-                $Client->sendUser($userId,['msg'=>'数据接收中','content'=>$value??'','type'=>'buildDeploy']);
-        }
 
+        $this->sendUser('**********************开始连接目标主机******************'.PHP_EOL.$hostList);
 
-        
-        $Client->sendUser($userId, [
-            'msg' => '连接主机',
-            'content' => '**********************开始连接目标主机******************'.PHP_EOL.$hostList,
-            'type' => 'buildDeploy',
-        ]);
         # 主项目构建完成 分别进入目标主机 继续构建
         foreach ($serverGroup as $value) {
-            $targetSSH = new Ssh2($value);
-            $Client->sendUser($userId, [
-                'msg' => '启动新窗口',
-                'content' => '**************连接主机：'.$value['name'].'['.$value['host'].'] 成功 *****************',
-                'type' => 'buildDeploy',
-            ]);
+            usleep(10000);
+            $this->sendUser('**************连接主机：'.$value['name'].'['.$value['host'].'] 成功 *****************');
+
             # 连接目标目标主机
-            $targetShell[] = 'll';
+            $targetShell[] = 'ssh '.$value['username'].'@'.$value['host'].' -p '.$value['port'];
+            $SSHobject->WSdirectFgetsXterm($targetShell);
             # 解压文件到目标目录
             # 进入目标目录
             # 设置文件权限
-            $targetRes = $targetSSH->jointFwriteXterm($targetShell);
-            foreach ($targetSSH->directFgetsXterm($targetSSH,$targetRes['jointShell'],$targetRes['time']) as $targetValue){
-                $Client->sendUser($userId,['msg'=>'数据接收中','content'=>$targetValue??'----','type'=>'buildDeploy']);
-            }
+            $SSHobject->WSdirectFgetsXterm('ll');
+            # 创建临时目录
+            # 解压文件到目标目录 $value  tar -xzvf layuiAdmin.tar -C /root/ddd/ >null.log
+
+            $this->sendUser('---------开始解压到运行命令（临时的后期是先到临时目录配置设置完成再统一修改nginx配置）----------');
+            $valueShell =[];
+            $valueShell[] ='tar -xzvf '.$value['path'].$gitInfo['name'].'.tar  -C '.$value['runPath'].' >'.$gitInfo['name'].'.log';
+            $valueShell[] ='cd '.$value['runPath'].$gitInfo['name'];
+            $valueShell[] ='echo 设置文件权限';
+            $valueShell[] ='chown -R www:www ./ ..';
+            $valueShell[] ='pwd';
+            $valueShell[] ='ll';
+            $valueShell[] ='echo **************完成主机：'.$value['name'].'['.$value['host'].']构建*****************';
+            $SSHobject->WSdirectFgetsXterm($valueShell);
+            $this->sendUser('**************从主机：'.$value['name'].'['.$value['host'].']中退出*****************');
+            $SSHobject->WSdirectFgetsXterm('exit');
 
         }
+        $this->sendUser(PHP_EOL.'--------------'.date('Y-m-d H:i:s').'---------------');
+        $this->sendUser(PHP_EOL.'---------------构建执行完成--------------','构建执行完成','PerformTheEnd');
+        Cache::set(['deploy','BuildSocket'],null,0,'deploy');
+
     }
+
+    /**
+     * 快捷发送ws
+     * @param Client $Client
+     * @param string $content
+     * @param string $msg
+     * @param string $type
+     */
+    public function sendUser(string $content,$msg='数据接收中',$type='buildDeploy')
+    {
+        $this->WSClient->sendUser($this->WSuserId,['msg'=>$msg,'content'=>$content,'type'=>$type]);
+        usleep(30000);
+    }
+
+
 }

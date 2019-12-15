@@ -22,6 +22,7 @@ use pizepei\deploy\model\interspace\DeployInterspaceModel;
 use pizepei\deploy\service\BasicDeploySerice;
 use pizepei\deploy\service\BasicsGitlabService;
 use pizepei\helper\Helper;
+use pizepei\model\cache\Cache;
 use pizepei\model\db\Model;
 use pizepei\model\db\TableAlterLogModel;
 use pizepei\service\encryption\PasswordHash;
@@ -814,7 +815,41 @@ class BasicsDeploy extends Controller
         }
         $this->succeed($System);
     }
+    /**
+     * @param \pizepei\staging\Request $Request
+     *      path [object] 路径参数
+     *           id [int] 项目id
+     *           ref [string] 分支，标记或提交的名称
+     * @return array [json]
+     *      data [raw]
+     * @title  部署时获取存储库文件内容
+     * @explain 部署时获取存储库文件内容
+     * @router get projects/:id[int]/config/files/:ref[string]
+     * @throws \Exception
+     */
+    public function projectsRepositoryFiles(Request $Request)
+    {
 
+        # 确认是否有 composer.json 文件  来判断是否是php项目
+        $service = new BasicsGitlabService();
+        $composerFiles = $service->apiRequest($this->UserInfo['id'],'projects/'.$Request->path('id').'/repository/files?file_path=composer.json&ref='.$Request->path('ref'),'','','private',false);
+        $packageFiles = $service->apiRequest($this->UserInfo['id'],'projects/'.$Request->path('id').'/repository/files?file_path=package.json&ref='.$Request->path('ref'),'','','private',false);
+
+        # content
+        if ($composerFiles){
+            $data['msg'] = '获取PHP项目配置成功';
+            $data['type'] = 'php';
+            $data['content'] = base64_decode($composerFiles['list']['content']);
+            $this->succeed($data,'获取PHP项目配置成功');
+        }else if ($packageFiles){
+            $data['msg'] = '获取前端项目配置成功';
+            $data['type'] = 'html';
+            $data['content'] = base64_decode($packageFiles['list']['content']);
+            $this->succeed($data,'获取前端项目配置成功');
+        }else{
+            $this->error('项目文件不存在');
+        }
+    }
 
     /**
      * @Author pizepei
@@ -847,13 +882,10 @@ class BasicsDeploy extends Controller
      */
     public function startDeployWebSocket()
     {
-        $cli = 'cd '.$this->app->DOCUMENT_ROOT.'public'.DIRECTORY_SEPARATOR.' && php index_cli.php --route /deploy/start-web-socket   --domain '.$_SERVER['HTTP_HOST'].'>/dev/null & )';
+        $cli = 'cd '.$this->app->DOCUMENT_ROOT.'public'.DIRECTORY_SEPARATOR.' && php index_cli.php --route /deploy/start-web-socket   --domain '.$_SERVER['HTTP_HOST'].'>/dev/null';
         exec($cli,$res, $status);
-        if ($status){
-            $this->succeed([$res,$status,$cli],'操作成功');
-        }else{
-            $this->error('操作失败',0,[$res,$status,$cli]);
-        }
+        $this->succeed([$res,$status,$cli],'操作成功');
+
     }
 
     /**
@@ -863,6 +895,7 @@ class BasicsDeploy extends Controller
      * @title  cli 启动deploy WebSocketServer
      * @explain 启动WebSocketServer
      * @throws \Exception
+     * @baseAuth UserAuth:public
      * @return array [json]
      *      data [raw]
      * @router cli start-web-socket
@@ -929,6 +962,14 @@ class BasicsDeploy extends Controller
         if ($Interspace['owner'] !==$this->UserInfo['id']){
             if (!in_array($this->UserInfo['id'],$Interspace['maintainer']))$this->error('无权限');
         }
+        Cache::set(['deploy','BuildSocket'],null,0,'deploy');
+
+        # 设置构建
+        $Cache = Cache::get(['deploy','BuildSocket'],'deploy');
+        if ($Cache){
+            $this->error('构建服务器繁忙！');
+        }
+        Cache::set(['deploy','BuildSocket'],$Request->post(),10,'deploy');
         # 通过gitlab_id 获取项目信息
         $service = new BasicsGitlabService();
         $gitProjects = $service->apiRequest($this->UserInfo['id'],'projects/'.$Request->post('gitlab_id'));
@@ -956,6 +997,7 @@ class BasicsDeploy extends Controller
             $value['password'] = $value['ssh2_password'];
             $value['host'] = $value['server_ip'];
             $value['path'] = '/root/';
+            $value['runPath'] = '/www/wwwroot/socks.qqjsq.top/';
         }
 
         # Deploy.php配置信息

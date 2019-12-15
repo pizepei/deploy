@@ -6,6 +6,8 @@
  * Time: 10:06
  */
 namespace pizepei\deploy;
+use pizepei\service\websocket\Client;
+
 class Ssh2
 {
     private $config = [
@@ -164,9 +166,8 @@ class Ssh2
      * @title  直接返回数据给webSocket
      * @explain 直接返回数据给webSocket
      */
-    public function directFgetsXterm(ssh2 $shell,string $command,$astrict=300,$max=1200)
+    public function directFgetsXterm($parasitiferShell,string $command,$astrict=300,$max=1200)
     {
-        $parasitiferShell = $shell->ssh2_shell_xterm();
         $this->fwriteXterm($parasitiferShell,$command);
         $time = time();
         $maxTime = time();
@@ -181,7 +182,7 @@ class Ssh2
             {
                 if (preg_match($this->pattern,$fgets) !== 0 ){
                     $break = true;
-                    yield $fgets.':命令行执行完毕';
+                    yield $fgets;
                 }else{
                     $maxTime = time();
                     yield $fgets;
@@ -229,5 +230,54 @@ class Ssh2
     {
         return ssh2_scp_send($this->conn, $local_file, $remote_file,$create_mode);
     }
+    /**
+     * 执行命令直接输出
+     * @param $WSobject     连接
+     * @param $Shell  命令行
+     */
+    public function WSdirectFgetsXterm($Shell,$type='buildDeploy')
+    {
+        # 拼接命令行
+        if (is_array($Shell)){
+            $targetRes = $this->jointFwriteXterm($Shell);
+        }else{
+            $targetRes =[
+                'jointShell'=>$Shell,
+                'time'  =>100
+            ];
+        }
+        foreach ($this->directFgetsXterm($this->SSHconnect,$targetRes['jointShell'],$targetRes['time']) as $targetValue){
+            $this->WSobject->sendUser($this->WSuserId,['msg'=>'数据接收中','content'=>$targetValue??'----','type'=>$type]);
+        }
+        usleep(10000);
+    }
 
+    /**
+     * ssh连接标识
+     * @var Ssh2
+     */
+    protected $SSHconnect =null;
+    /**
+     * ws 连接对象
+     * @var  Client
+     */
+    protected $WSobject =null;
+    /**
+     * ws 客户端uuid
+     * @var string
+     */
+    protected $WSuserId ='';
+
+    /**
+     * 通过ws 返回结果的初始化方法
+     * @param Client $WSobject
+     * @param $userId
+     * @throws \Exception
+     */
+    public function wsInit(Client $WSobject,$userId)
+    {
+        $this->SSHconnect = $this->ssh2_shell_xterm();
+        $this->WSobject = $WSobject;
+        $this->WSuserId = $userId;
+    }
 }

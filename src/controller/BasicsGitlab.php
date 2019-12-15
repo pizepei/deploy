@@ -273,7 +273,26 @@ class BasicsGitlab extends Controller
     }
 
 
-
+    /**
+     * @param \pizepei\staging\Request $Request
+     *      path [object] 路径参数
+     *           id [int] 项目id
+     *           refName [string] 分支
+     *      get [object]
+     *          file_path [string] 新文件的完整路径。例如 lib / class.rb
+     *          ref [string] 分支，标记或提交的名称
+     * @return array [json]
+     *      data [raw]
+     * @title  获取存储库文件内容
+     * @explain 获取存储库文件内容
+     * @router get projects/:id[int]/repository/files
+     * @throws \Exception
+     */
+    public function projectsRepositoryFiles(Request $Request)
+    {
+        $service = new BasicsGitlabService();
+        return $this->succeed( $service->apiRequest($this->UserInfo['id'],'projects/'.$Request->path('id').'repository/files?file_path='.$Request->input('file_path').'&ref='.$Request->input('ref')),'获取文件成功');
+    }
     /**
      * @param \pizepei\staging\Request $Request
      *      path [object] 路径参数
