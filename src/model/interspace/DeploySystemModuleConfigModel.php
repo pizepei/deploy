@@ -22,23 +22,20 @@ class DeploySystemModuleConfigModel extends Model
         'id'=>[
             'TYPE'=>'uuid','COMMENT'=>'主键uuid','DEFAULT'=>false,
         ],
+        'system_id'=>[
+            'TYPE'=>'uuid', 'DEFAULT'=>'', 'COMMENT'=>'系统id',
+        ],
         'name'=>[
             'TYPE'=>'varchar(200)', 'DEFAULT'=>'', 'COMMENT'=>'配置名字',
-        ],
-        'explain'=>[
-            'TYPE'=>'varchar(200)', 'DEFAULT'=>'配置备注说明', 'COMMENT'=>'配置备注说明',
-        ],
-        'domain'=>[
-            'TYPE'=>'json', 'DEFAULT'=>false, 'COMMENT'=>'域名可多个、不带http',
         ],
         'config'=>[
             'TYPE'=>'json', 'DEFAULT'=>false, 'COMMENT'=>'基础配置'
         ],
-        'dbtabase'=>[
-            'TYPE'=>'json', 'DEFAULT'=>false, 'COMMENT'=>'数据库配置',
+        'explain'=>[
+            'TYPE'=>'varchar(200)', 'DEFAULT'=>'配置备注说明', 'COMMENT'=>'配置备注说明',
         ],
-        'extend'=>[
-            'TYPE'=>'json', 'DEFAULT'=>false, 'COMMENT'=>'扩展配置',
+        'config_type'=>[
+            'TYPE'=>"ENUM('config','database','deploy','error')", 'DEFAULT'=>'ORIGINAL', 'COMMENT'=>'配置类型',
         ],
         'pattern'=>[
             'TYPE'=>"ENUM('SAAS','ORIGINAL')", 'DEFAULT'=>'ORIGINAL', 'COMMENT'=>'SAAS、传统模式',

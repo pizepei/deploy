@@ -12,7 +12,10 @@ namespace pizepei\deploy;
 
 use config\app\BaseAuthGroup;
 use GuzzleHttp\Client;
+use pizepei\deploy\model\DeployServerConfigModel;
 use pizepei\deploy\model\MicroServiceConfigCenterModel;
+use pizepei\deploy\model\system\DeployDomainModel;
+use pizepei\deploy\model\system\DeploySystemModel;
 use pizepei\encryption\aes\Prpcrypt;
 use pizepei\encryption\SHA1;
 use pizepei\func\Func;
@@ -217,6 +220,129 @@ class LocalDeployServic
         ];
 
     }
+
+    /**
+     * @Author pizepei
+     * @Created 2019/12/16 22:54
+     * @title  初始化对应app项目配置
+     * @explain 初始化对应app项目配置
+     */
+    public function initConfigCenterV2($body,$appid)
+    {
+
+        # 有一个域名关联表  保存域名和appid的关系    appid 对应自己的配置  这样可以多个域名对应一个appid   也可以一对一
+        # saas模式下是一个域名对应一个appid =配置
+        # 传统模式下可以是多个域名对应一个appid=配置
+        # 流程必须的参数   appid  项目模块gitid  域名
+        # 通过域名查询到  系统+appid（系统id）信息    （域名应该要是唯一的）  通过获取所有的主机信息自动判断ip名单
+        # 通过系统id + git模块id  获取到对应的 db 等信息
+        $DeploySystem = DeploySystemModel::table()->get($appid);
+        if(empty($DeploySystem)){
+            throw new \Exception('初始化配置失败：非法请求,服务不存在不存在',10006);
+        }
+        # 判断域名信息
+        if (!in_array($body['domain'],$DeploySystem['domain'])) error('初始化配置失败：非法请求,服务不存在不存在',10006);
+        # 通过host_group查询确定ip白名单
+        $DeploySystem['host_group'];
+        # 获取远程生产运行主机信息
+        $ServerData = DeployServerConfigModel::table()
+            ->where(['group_id'=>[
+                'in',$DeploySystem['host_group']]
+                ,'status'=>2
+            ])
+            ->fetchAll(['server_ip']);
+        $server_ip = array_column($ServerData,'server_ip');
+        # 判断安全 ip
+        if(!in_array(TerminalInfo::get_ip(),$server_ip)){
+            throw new \Exception('初始化配置失败：非法的请求源:'.TerminalInfo::get_ip(),10007);
+        }
+        $date = date('Y-m-d H:i:s');
+        $microtime = microtime(true);
+        #进行解密
+        $Prpcrypt = new Prpcrypt($DeploySystem['deploy']['INITIALIZE']['appSecret']);
+
+        #  进行签名验证
+        $SHA1 = new SHA1();
+        $signature = $SHA1->getSHA1($DeploySystem['deploy']['INITIALIZE']['token'],$body['timestamp'],$body['nonce'], $body['encrypt_msg']);
+        if(empty($signature) || $signature !== $body['signature'])
+        {
+            throw new \Exception('初始化配置失败：签名验证失败',10008);
+        }
+        /**
+         * 进行解密
+         */
+        $Prpcrypt = new Prpcrypt($DeploySystem['deploy']['INITIALIZE']['appSecret']);
+
+        $msg = $Prpcrypt->decrypt($body['encrypt_msg']);
+        if(empty($msg))
+        {
+            $msg = $Prpcrypt->decrypt($body['encrypt_msg']);
+        }
+        if(empty($msg))
+        {
+            error('初始化配置失败：解密错误',10009);
+        }
+        # 判断appid 和域名  有效期判断
+        $result = json_decode($msg[1],true);
+        if(time() - $result['time'] > 120)
+        {
+            error('初始化配置失败：数据过期',10012);
+        }
+        if($msg[2] !== $appid || $result['appid'] !==$appid ||$result['domain'] !==$body['domain'])
+        {
+            error('初始化配置失败：appid or domain 不匹配',10010);
+        }
+        # 通过域名+系统id
+
+
+        # 验证通过根据请求返回数据Config.php  Dbtabase.php  ErrorOrLogConfig.php
+        switch($result['ProcurementType']) {
+            case 'Config':
+                $config = $DeploySystem['config'];
+                break;
+            case 'Dbtabase':
+                $config = $DeploySystem['dbtabase'];
+                break;
+            case 'ErrorOrLogConfig':
+                $config = $DeploySystem['error_or_log'];
+                break;
+            default:
+                // 不满足所有条件执行的代码块
+                break;
+        }
+
+        return $server_ip;
+        /**
+         * 加密
+         * 获取对应的配置信息（带上获取配置的时间和配置中心信息，用来防止重复请求或者错误排查）
+         */
+        $encryptData = [
+            'date'=>$date,
+            'time'=>$microtime,
+            'ProcurementType'=>$result['ProcurementType'],
+            'appid'=>$appid,
+            'config'=>$config,
+            'domain'=>$result['domain'],
+        ];
+        $encrypt_msg = $Prpcrypt->encrypt(json_encode($encryptData),$appid,true);
+        $nonce = Helper::str()->int_rand(10);
+        $timestamp = time();
+        $SHA1 = new SHA1();
+        $signature = $SHA1->getSHA1($DeploySystem['deploy']['INITIALIZE']['token'],$timestamp,$nonce, $encrypt_msg);
+        if(!$signature){ throw new \Exception('初始化配置失败：构造配置时 signature',10011);}
+        return [
+            'date'              =>$date,
+            'appid'             =>$appid,
+            'domain'            =>$result['domain'] ,
+            'nonce'             =>$nonce,
+            'timestamp'         =>$timestamp,
+            'signature'         =>$signature,
+            'encrypt_msg'       =>$encrypt_msg,
+        ];
+
+    }
+
+
 
     /**
      * @Author 皮泽培

@@ -17,6 +17,7 @@ use pizepei\deploy\model\DeployServerConfigModel;
 use pizepei\deploy\model\DeployServerGroupModel;
 use pizepei\deploy\model\DeployServerRelevanceModel;
 use pizepei\deploy\model\GitlabAccountModel;
+use pizepei\deploy\model\system\DeploySystemDbConfigModel;
 use pizepei\deploy\model\system\DeploySystemModel;
 use pizepei\deploy\model\interspace\DeployInterspaceModel;
 use pizepei\deploy\service\BasicDeploySerice;
@@ -286,9 +287,38 @@ class BasicsDeploy extends Controller
      */
     public function serviceConfig(Request $Request)
     {
+        # 有一个域名关联表  保存域名和appid的关系    appid 对应自己的配置  这样可以多个域名对应一个appid   也可以一对一
+        # saas模式下是一个域名对应一个appid =配置
+        # 传统模式下可以是多个域名对应一个appid=配置
         $LocalDeploy = new LocalDeployServic();
         return $this->succeed($LocalDeploy->initConfigCenter($Request->input('','raw'),$Request->path('appid')));
     }
+    /**
+     * @Author pizepei
+     * @Created 2019/7/5 22:40
+     *
+     * @param \pizepei\staging\Request $Request
+     *      path [object] 路径参数
+     *          appid [string] 项目appid
+     * @title  获取项目配置接口
+     * @explain 获取项目配置接口（基础配置）。
+     * @throws \Exception
+     * @baseAuth UserAuth:public
+     * @return array [json]
+     *      data [raw]
+     * @router post service-config/v2/:appid[string]
+     */
+    public function initConfigCenterV2(Request $Request)
+    {
+        # 有一个域名关联表  保存域名和appid的关系    appid 对应自己的配置  这样可以多个域名对应一个appid   也可以一对一
+        # saas模式下是一个域名对应一个appid =配置
+        # 传统模式下可以是多个域名对应一个appid=配置
+        $LocalDeploy = new LocalDeployServic();
+        return $this->succeed($LocalDeploy->initConfigCenterV2(['domain'=>'www.qqjsq.top'],$Request->path('appid')));
+    }
+
+
+
 
     /**
      * @Author pizepei
@@ -412,7 +442,8 @@ class BasicsDeploy extends Controller
      * @param \pizepei\staging\Request $Request
      *      raw [object] 添加的数据
      *          name [string] 备注名称
-     *          explain [string] 分组说明
+     *          group_id [uuid] 分组group_id
+     *          explain [string] 说明
      *          server_ip [string] ip地址
      *          ssh2_port [string] 端口
      *          ssh2_user [string] 登录服务器的账号
@@ -426,8 +457,8 @@ class BasicsDeploy extends Controller
      *          os_versions [string] 服务器系统版本
      *          operation [string] 环境参数
      *          period [string] 期限
-     * @title  获取主机分组
-     * @explain 获取主机分组列表
+     * @title  添加主机分组
+     * @explain 添加主机分组
      * @throws \Exception
      * @return array [json]
      *      data [raw]
@@ -713,6 +744,16 @@ class BasicsDeploy extends Controller
         }
         # 生成code
         $data['code'] = Helper()->str()->str_rand(5);
+        # 部署信息
+        $data['deploy'] =[
+            '__EXPLOIT__'=>1,//暂时设置为1
+            'toLoadConfig'=>'ConfigCenter',
+            'INITIALIZE'=>[
+                'token'         =>Helper()->str()->str_rand(32),
+                'appSecret'     =>Helper()->str()->str_rand(37),
+                'configCenter'  =>'http://config.heil.top/deploy/',
+            ],
+        ];
         # 写入信息
         $this->succeed(DeploySystemModel::table()->add($data),'操作成功');
     }
@@ -962,8 +1003,6 @@ class BasicsDeploy extends Controller
         if ($Interspace['owner'] !==$this->UserInfo['id']){
             if (!in_array($this->UserInfo['id'],$Interspace['maintainer']))$this->error('无权限');
         }
-        Cache::set(['deploy','BuildSocket'],null,0,'deploy');
-
         # 设置构建
         $Cache = Cache::get(['deploy','BuildSocket'],'deploy');
         if ($Cache){
@@ -986,6 +1025,7 @@ class BasicsDeploy extends Controller
         $ServerData = DeployServerConfigModel::table()
             ->where(['group_id'=>[
                 'in',$System['host_group']]
+                ,'status'=>2
             ])
             ->fetchAll();
         if (empty($ServerData)){$this->error('没有远程生产运行主机信息');}
@@ -1007,6 +1047,36 @@ class BasicsDeploy extends Controller
         $DeployService = new DeployService();
         return $this->succeed([$DeployService->deployBuildSocket(\Deploy::buildServer,$ServerData,$deployBuilGitInfo,$this->UserInfo['id'],$deployData)]);
     }
+
+
+    /**
+     * @Author pizepei
+     * @Created 2019/8/25 22:40
+     * @param \pizepei\staging\Request $Request
+     *      path [object]
+     *          id [uuid] 系统id
+     * @title  获取系统下的数据库配置列表
+     * @explain 获取系统下的数据库配置列表
+     * @throws \Exception
+     * @return array [json]
+     *      data [raw]
+     * @router get system/:id[uuid]/db/config-List
+     */
+    public function deploySystemDbConfigList(Request $Request)
+    {
+
+        $System = DeploySystemModel::table()->get($Request->path('id'));
+        if (!$System) $this->error('系统不存在');
+        # 查询空间信息
+        $Interspace = DeployInterspaceModel::table()->where(['id'=>$System['interspace_id'],'owner'=>$this->UserInfo['id']])->fetch();
+        if (!$Interspace) $this->error('只有空间管理员才有权限');
+        $DbConfig = DeploySystemDbConfigModel::table()
+            ->where(['system_id'])
+            ->fetchAll();
+        $this->succeed($DbConfig);
+    }
+
+
 
 
 }

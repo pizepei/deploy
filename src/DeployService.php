@@ -605,7 +605,7 @@ class DeployService
             # 针对性构建
             if ($gitInfo['type'] === 'php'){
                 $Shell[] = 'echo PHP项目进行：composer install';
-                $Shell[] = ['composer install  --no-dev',466];
+                $Shell[] = ['composer install  --no-dev',700];
             }else if ($gitInfo['type'] === 'html'){
 
             }
@@ -613,7 +613,7 @@ class DeployService
             # 针对性构建
             if ($gitInfo['type'] === 'php'){
                 $Shell[] = 'echo PHP项目进行：composer update';
-                $Shell[] = ['composer update',110];
+                $Shell[] = ['composer update',700];
             }else if ($gitInfo['type'] === 'html'){
 
             }
@@ -676,32 +676,43 @@ class DeployService
         $this->sendUser('**********************开始连接目标主机******************'.PHP_EOL.$hostList);
 
         # 主项目构建完成 分别进入目标主机 继续构建
-        foreach ($serverGroup as $value) {
-            usleep(10000);
-            $this->sendUser('**************连接主机：'.$value['name'].'['.$value['host'].'] 成功 *****************');
+        foreach ($serverGroup as $valueIn) {
+            usleep(20000);
+            $this->sendUser('**************连接主机：'.$valueIn['name'].'['.$valueIn['host'].'] 成功 *****************');
 
             # 连接目标目标主机
-            $targetShell[] = 'ssh '.$value['username'].'@'.$value['host'].' -p '.$value['port'];
+            $targetShell[] = 'ssh '.$valueIn['username'].'@'.$valueIn['host'].' -p '.$valueIn['port'];
             $SSHobject->WSdirectFgetsXterm($targetShell);
             # 解压文件到目标目录
             # 进入目标目录
             # 设置文件权限
-            $SSHobject->WSdirectFgetsXterm('ll');
+            $SSHobject->WSdirectFgetsXterm('pwd');
             # 创建临时目录
             # 解压文件到目标目录 $value  tar -xzvf layuiAdmin.tar -C /root/ddd/ >null.log
 
-            $this->sendUser('---------开始解压到运行命令（临时的后期是先到临时目录配置设置完成再统一修改nginx配置）----------');
             $valueShell =[];
-            $valueShell[] ='tar -xzvf '.$value['path'].$gitInfo['name'].'.tar  -C '.$value['runPath'].' >'.$gitInfo['name'].'.log';
-            $valueShell[] ='cd '.$value['runPath'].$gitInfo['name'];
-            $valueShell[] ='echo 设置文件权限';
-            $valueShell[] ='chown -R www:www ./ ..';
+//            $valueShell[] = 'echo 开始解压到运行命令:后期是先到临时目录配置设置完成再统一修改nginx配置';# 创建临时目录
+            $valueShell[] = 'll';# 创建临时目录
+
+            $valueShell[] = 'mkdir -p /deploy/mtp/';# 创建临时目录
+//            $valueShell[] = "echo '创建目录'";
+            $valueShell[] = 'mkdir -p '.$valueIn['runPath'];# 创建运行目录
+//            $valueShell[] = "echo '设置运行目录权限'";#
+            $valueShell[] = 'chown -R www:www '.$valueIn['runPath'];# 设置权限
+
+//            $valueShell[] = 'echo 开始解压';
+            $valueShell[] ='tar -xzvf '.$valueIn['path'].$gitInfo['name'].'.tar  -C '.$valueIn['runPath'].' >'.$gitInfo['name'].'.log';
+            $valueShell[] ='cd '.$valueIn['runPath'].$gitInfo['name'];
+//            $valueShell[] ='echo 设置文件权限';
             $valueShell[] ='pwd';
-            $valueShell[] ='ll';
-            $valueShell[] ='echo **************完成主机：'.$value['name'].'['.$value['host'].']构建*****************';
+
             $SSHobject->WSdirectFgetsXterm($valueShell);
-            $this->sendUser('**************从主机：'.$value['name'].'['.$value['host'].']中退出*****************');
-            $SSHobject->WSdirectFgetsXterm('exit');
+            $SSHobject->WSdirectFgetsXterm('chown -R www:www ./ ..');
+            $SSHobject->WSdirectFgetsXterm('ll');
+            $this->sendUser('echo ************完成主机：'.$valueIn['name'].'['.$valueIn['host'].']构建***************');
+            $this->sendUser('************从主机：'.$valueIn['name'].'['.$valueIn['host'].']中退出***************');
+            $SSHobject->WSdirectFgetsXterm(['exit']);
+            $SSHobject->WSdirectFgetsXterm(['pwd']);
 
         }
         $this->sendUser(PHP_EOL.'--------------'.date('Y-m-d H:i:s').'---------------');
