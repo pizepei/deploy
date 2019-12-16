@@ -20,6 +20,7 @@ use pizepei\deploy\model\GitlabAccountModel;
 use pizepei\deploy\model\system\DeploySystemDbConfigModel;
 use pizepei\deploy\model\system\DeploySystemModel;
 use pizepei\deploy\model\interspace\DeployInterspaceModel;
+use pizepei\deploy\service\BasicBtApiSerice;
 use pizepei\deploy\service\BasicDeploySerice;
 use pizepei\deploy\service\BasicsGitlabService;
 use pizepei\helper\Helper;
@@ -256,10 +257,24 @@ class BasicsDeploy extends Controller
     public function test(Request $Request)
     {
 
-        $Deploy = $this->app->InitializeConfig()->get_const('\Deploy');
-
-        $str = $this->app->InitializeConfig()->setConfigString('Deploy',$Deploy,'','Deploy');
-        echo $str;
+        $api = new BasicBtApiSerice('','');
+//        $BasicBtApiSerice = new BasicBtApiSerice('http://'.$v['server_ip'].':'.$v['bt_api']['port'],$v['bt_api']['key']);
+        $res= $api->AddSite([
+            'webname'=>json_encode(["domain"=>"1w1.hao.com","domainlist"=>['sss.ccccc','1ssw1.hao.com'],"count"=>0]),#  网站域名 json格式
+            'path'=>'/www/wwwroot/w12.hao.com',# 网站路径
+            'type_id'=>0,# 网站分类ID
+            'type'=>'PHP',# 网站类型
+            'version'=>'73',# PHP版本
+            'port'=>80, # 网站端口
+            'ps'=>'sssss', # 网站备注
+            'ftp'=>false,
+            'sql'=>false
+        ]);
+        $this->succeed($res);
+//        $Deploy = $this->app->InitializeConfig()->get_const('\Deploy');
+//
+//        $str = $this->app->InitializeConfig()->setConfigString('Deploy',$Deploy,'','Deploy');
+//        echo $str;
 //        $this->succeed($str);
 
     }
@@ -352,8 +367,8 @@ class BasicsDeploy extends Controller
      *          status [int] 状态
      *          explain [string] 说明
      *          serve_group [string] 分组
-     * @title  获取主机分组
-     * @explain 获取主机分组列表
+     * @title  添加主机分组
+     * @explain 添加主机分组列表
      * @throws \Exception
      * @return array [json]
      *      data [raw]
@@ -378,8 +393,8 @@ class BasicsDeploy extends Controller
      *          status [int] 状态
      *          explain [string] 说明
      *          serve_group [string] 分组
-     * @title  获取主机分组
-     * @explain 获取主机分组列表
+     * @title  修改主机分组
+     * @explain 修改主机分组列表
      * @throws \Exception
      * @return array [json]
      *      data [raw]
@@ -457,6 +472,9 @@ class BasicsDeploy extends Controller
      *          os_versions [string] 服务器系统版本
      *          operation [string] 环境参数
      *          period [string] 期限
+     *          bt_api [object]
+     *              port [int] 端口号
+     *              key [string] 密码
      * @title  添加主机分组
      * @explain 添加主机分组
      * @throws \Exception
@@ -495,8 +513,11 @@ class BasicsDeploy extends Controller
      *          os_versions [string] 服务器系统版本
      *          operation [string] 环境参数
      *          period [string] 期限
-     * @title  获取主机
-     * @explain 获取主机列表
+     *          bt_api [object]
+     *              port [int] 端口号
+     *              key [string] 密码
+     * @title  修改主机
+     * @explain 修改主机列表
      * @throws \Exception
      * @return array [json]
      *      data [raw]
@@ -753,6 +774,34 @@ class BasicsDeploy extends Controller
                 'appSecret'     =>Helper()->str()->str_rand(37),
                 'configCenter'  =>'http://config.heil.top/deploy/',
             ],
+        ];
+        # 通过主机分组 获取bt信息 创建网站
+        # 获取远程生产运行主机信息
+        $ServerData = DeployServerConfigModel::table()
+            ->where(['group_id'=>[
+                'in',$data['host_group']]
+                ,'status'=>2
+            ])
+            ->fetchAll(['server_ip','bt_api']);
+        if (!$ServerData) $this->error('主机分组中没有服务器');
+        foreach ($ServerData as $v)
+        {
+            # 创建网站AddSite  https://www.bt.cn/api-doc.pdf
+            $BasicBtApiSerice = new BasicBtApiSerice('http://'.$v['server_ip'].':'.$v['bt_api']['port'],$v['bt_api']['key']);
+            $res[$v['server_ip']] = $BasicBtApiSerice->AddSite([
+                'webname'=>json_encode($data['domain']),#  网站域名 json格式
+                'path'=>'/www/wwwroot/'.key($data['domain']),# 网站路径
+                'type_id'=>0,# 网站分类ID
+                'type'=>'PHP',# 网站类型
+                'version'=>'73',# PHP版本
+                'port'=>80, # 网站端口
+                'ps'=>$data['name'], # 网站备注
+                'ftp'=>false,
+                'sql'=>false
+            ]);
+        }
+        $data['extend'] = [
+            'bt'=>$res,
         ];
         # 写入信息
         $this->succeed(DeploySystemModel::table()->add($data),'操作成功');

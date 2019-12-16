@@ -166,14 +166,14 @@ class Ssh2
      * @title  直接返回数据给webSocket
      * @explain 直接返回数据给webSocket
      */
-    public function directFgetsXterm($parasitiferShell,string $command,$astrict=300,$max=1200)
+    public function directFgetsXterm($parasitiferShell,string $command,$astrict=600,$max=1200)
     {
         $this->fwriteXterm($parasitiferShell,$command);
         $time = time();
         $maxTime = time();
         $break = false;
         while(time()-$time < $max || time()-$maxTime <$astrict) {
-            usleep(50000);
+            usleep(40000);
             $fgets = fgets($parasitiferShell);
             if ($break){
                 break;

@@ -613,7 +613,7 @@ class DeployService
             # 针对性构建
             if ($gitInfo['type'] === 'php'){
                 $Shell[] = 'echo PHP项目进行：composer update';
-                $Shell[] = ['composer update',700];
+                $Shell[] = ['composer update',1200];
             }else if ($gitInfo['type'] === 'html'){
 
             }
@@ -667,11 +667,10 @@ class DeployService
 
         # 初始化 ssh
         $SSHobject->wsInit($Client,$userId);
-
-
         echo Helper()->json_encode(['code'=>200,"msg"=>'开始构建'.$gitInfo['name'].'['.$gitInfo['type'].'] 项目','data'=>['xtermSon'=>$xtermSon]]);
-        $SSHobject->WSdirectFgetsXterm($Shell);
+        $SSHobject->WSdirectFgetsXterm(['echo 连接构建主机成功！&& pwd ']);
         fastcgi_finish_request();
+        $SSHobject->WSdirectFgetsXterm($Shell);
 
         $this->sendUser('**********************开始连接目标主机******************'.PHP_EOL.$hostList);
 
