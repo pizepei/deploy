@@ -557,7 +557,7 @@ class DeployService
             $value['host'] = $value['server_ip'];
             $value['path'] = '/deploy/tmp/'.$Interspace['code'].'_'.$System['code'].'/';
             $value['runPath'] = '/deploy/wwwroot/'.$Interspace['code'].'_'.$System['code'].'/'.$date.'/';
-            $value['wwwrootPath'] = '/deploy/tmp/'.$Interspace['code'].'_'.$System['code'];
+            $value['wwwrootPath'] = '/www/wwwroot/'.$Interspace['code'].'_'.$System['code'];
         }
         $ServerDataS['list'] =$ServerData;
         $ServerDataS['id'] =$System['host_group'];
@@ -800,7 +800,6 @@ class DeployService
             $this->SSHobject->WSdirectFgetsXterm($valueShell);
             # 设置软连接  ln -snf /deploy/wwwroot/CF3D18_97346/2019_12_17_17_26_43/layuiAdmin  /www/wwwroot/
             $this->SSHobject->WSdirectFgetsXterm('ln -snf '.$valueIn['runPath'].$gitInfo['name'].' '.$valueIn['wwwrootPath']);# 设置软连接
-
             $this->SSHobject->WSdirectFgetsXterm('cd '.$valueIn['wwwrootPath']); # 进入运行目录
             $this->SSHobject->WSdirectFgetsXterm('chown -R www:www '.$valueIn['wwwrootPath']); # 设置运行目录的权限
 //            $this->SSHobject->WSdirectFgetsXterm('chown -R www:www ./ ..');
