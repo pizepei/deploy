@@ -555,9 +555,9 @@ class DeployService
             $value['port'] = $value['ssh2_port'];
             $value['password'] = $value['ssh2_password'];
             $value['host'] = $value['server_ip'];
-            $value['path'] = '/deploy/tmp/'.$Interspace['code'].'_'.$System['code'].'/';
-            $value['runPath'] = '/deploy/wwwroot/'.$Interspace['code'].'_'.$System['code'].'/'.$date.'/';
-            $value['wwwrootPath'] = '/www/wwwroot/'.$Interspace['code'].'_'.$System['code'];
+            $value['path'] =        '/deploy/tmp/'.$Interspace['code'].'_'.$System['code'].'/';# 保存压缩包的目录
+            $value['runPath'] =     '/deploy/wwwroot/'.$Interspace['code'].'_'.$System['code'].'/'.$date.'/';# 解压的运行目录 被软连接的目录
+            $value['wwwrootPath'] = '/www/wwwroot/'.$Interspace['code'].'_'.$System['code'];        # nginx 网站指定运的行目录
         }
         $ServerDataS['list'] =$ServerData;
         $ServerDataS['id'] =$System['host_group'];
@@ -776,10 +776,9 @@ class DeployService
 
     public function targetDeployBuildSocket(array $serverGroup,array $gitInfo)
     {
-        $this->sendUser('**********************开始连接目标主机******************'.PHP_EOL.$hostList);
+        $this->SSHobject->WSdirectFgetsXterm([$this->getIpSSH,'echo -e "\033[31m *****************开始连接目标主机***************** \033[0m"']);
         # 主项目构建完成 分别进入目标主机 继续构建
         foreach ($serverGroup['list'] as $valueIn) {
-
             usleep(20000);
             $this->sendUser('**************开始连接主机：'.$valueIn['name'].'['.$valueIn['host'].']*****************');
             # 连接目标目标主机
