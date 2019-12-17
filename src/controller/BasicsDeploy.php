@@ -321,7 +321,7 @@ class BasicsDeploy extends Controller
      * @baseAuth UserAuth:public
      * @return array [json]
      *      data [raw]
-     * @router post service-config/v2/:appid[string]
+     * @router post v2/service-config/:appid[string]
      */
     public function initConfigCenterV2(Request $Request)
     {
@@ -764,7 +764,7 @@ class BasicsDeploy extends Controller
             if (!empty($domainRes)){$this->error('域名不需要http或者/格式错误');}
         }
         # 生成code
-        $data['code'] = Helper()->str()->str_rand(5);
+        $data['code'] = Helper()->str()->str_rand(6);
         # 部署信息
         $data['deploy'] =[
             '__EXPLOIT__'=>1,//暂时设置为1
@@ -772,7 +772,7 @@ class BasicsDeploy extends Controller
             'INITIALIZE'=>[
                 'token'         =>Helper()->str()->str_rand(32),
                 'appSecret'     =>Helper()->str()->str_rand(37),
-                'configCenter'  =>'http://config.heil.top/deploy/',
+                'configCenter'  =>'http://config.heil.top/deploy/v2/',//配置中心地址
             ],
         ];
         # 通过主机分组 获取bt信息 创建网站
@@ -784,13 +784,17 @@ class BasicsDeploy extends Controller
             ])
             ->fetchAll(['server_ip','bt_api']);
         if (!$ServerData) $this->error('主机分组中没有服务器');
+        $BasicBtApiSerice = new BasicBtApiSerice();
+
+        return $this->succeed($BasicBtApiSerice->batchInit($data['host_group']));
+
         foreach ($ServerData as $v)
         {
             # 创建网站AddSite  https://www.bt.cn/api-doc.pdf
             $BasicBtApiSerice = new BasicBtApiSerice('http://'.$v['server_ip'].':'.$v['bt_api']['port'],$v['bt_api']['key']);
-            $res[$v['server_ip']] = $BasicBtApiSerice->AddSite([
-                'webname'=>json_encode($data['domain']),#  网站域名 json格式
-                'path'=>'/www/wwwroot/'.key($data['domain']),# 网站路径
+            $btData = [
+                'webname'=>json_encode(["domain"=>reset($data['domain']),"domainlist"=>$data['domain'],"count"=>0]),#  网站域名 json格式
+                'path'=>'/www/wwwroot/'.$Interspace['code'].$data['code'],# 网站路径
                 'type_id'=>0,# 网站分类ID
                 'type'=>'PHP',# 网站类型
                 'version'=>'73',# PHP版本
@@ -798,7 +802,9 @@ class BasicsDeploy extends Controller
                 'ps'=>$data['name'], # 网站备注
                 'ftp'=>false,
                 'sql'=>false
-            ]);
+            ];
+            $res[$v['server_ip']]['res'] = $BasicBtApiSerice->AddSite($btData);
+            $res[$v['server_ip']]['data'] = $btData;
         }
         $data['extend'] = [
             'bt'=>$res,
@@ -1040,63 +1046,44 @@ class BasicsDeploy extends Controller
      */
     public function deployBuildSocket(Request $Request)
     {
-        # 尝试连接vps
+        # 设置为不超时
         ignore_user_abort();
-        set_time_limit(600);
-        # 通过系统id查询空间信息
-        $System = DeploySystemModel::table()->get($Request->post('system'));
-        if (!$System) $this->error('系统不存在');
-        # 查询空间信息判断是否有查看权限
-        $Interspace = DeployInterspaceModel::table()->get($System['interspace_id']);
-        if (empty($Interspace)) $this->error('空间不存在');
-        if ($Interspace['owner'] !==$this->UserInfo['id']){
-            if (!in_array($this->UserInfo['id'],$Interspace['maintainer']))$this->error('无权限');
-        }
+        set_time_limit(1200);
+        $DeployService = new DeployService();
+        $data = $DeployService->deployBuildSocketInitData($Request,$this->UserInfo);
         # 设置构建
         $Cache = Cache::get(['deploy','BuildSocket'],'deploy');
         if ($Cache){
             $this->error('构建服务器繁忙！');
         }
         Cache::set(['deploy','BuildSocket'],$Request->post(),10,'deploy');
-        # 通过gitlab_id 获取项目信息
-        $service = new BasicsGitlabService();
-        $gitProjects = $service->apiRequest($this->UserInfo['id'],'projects/'.$Request->post('gitlab_id'));
-        if (empty($gitProjects['list'])){ $this->error('项目不存在或者没有项目权限');}
-        $gitProjects = $gitProjects['list'];
-        $gitProjectsFiles = $service->apiRequest($this->UserInfo['id'],'projects/'.$Request->post('gitlab_id').'/repository/files?file_path=composer.json&ref='.$Request->post('branch'),'','','private',false);
-        $deployBuilGitInfo =  [
-            'ssh_url'   =>$gitProjects['ssh_url_to_repo'],
-            'sha'       =>'update',
-            'name'      =>$gitProjects['name'],
-            'type'      =>$gitProjectsFiles?'php':'html',
-        ];
-        # 获取远程生产运行主机信息
-        $ServerData = DeployServerConfigModel::table()
-            ->where(['group_id'=>[
-                'in',$System['host_group']]
-                ,'status'=>2
-            ])
-            ->fetchAll();
-        if (empty($ServerData)){$this->error('没有远程生产运行主机信息');}
-        # 处理服务器数据 远程生产运行主机信息
-        foreach ($ServerData as &$value)
-        {
-            $value['username'] = $value['ssh2_user'];
-            $value['port'] = $value['ssh2_port'];
-            $value['password'] = $value['ssh2_password'];
-            $value['host'] = $value['server_ip'];
-            $value['path'] = '/root/';
-            $value['runPath'] = '/www/wwwroot/socks.qqjsq.top/';
-        }
-
-        # Deploy.php配置信息
-        $Deploy = $this->app->InitializeConfig()->get_const('\Deploy');
-        $deployData['deployConfig'] = $this->app->InitializeConfig()->setConfigString('Deploy',$Deploy,'','Deploy');
-
-        $DeployService = new DeployService();
-        return $this->succeed([$DeployService->deployBuildSocket(\Deploy::buildServer,$ServerData,$deployBuilGitInfo,$this->UserInfo['id'],$deployData)]);
+        return $this->succeed($DeployService->deployBuildSocket($data['buildServer'],$data['ServerData'],$data['deployBuilGitInfo'],$data['UserInfoId'],$data['deployData']));
     }
-
+    /**
+     * @Author pizepei
+     * @Created 2019/6/16 22:43
+     * @param \pizepei\staging\Request $Request
+     *      post [object]
+     *          gitlab_id [int] gitlab_id
+     *          sha [string] 版本sha
+     *          system [uuid] 归属系统id
+     *          branch [string] 分支
+     * @return array [json]
+     *    data [raw]
+     * @throws \Exception
+     * @title 通过webSocket触发构建环境检测
+     * @explain 通过webSocket触发构建环境检测
+     * @router post deploy-build-socket-init
+     */
+    public function deployBuildSocketInit(Request $Request)
+    {
+        # 尝试连接vps
+        ignore_user_abort();
+        set_time_limit(120);
+        $DeployService = new DeployService();
+        $data = $DeployService->deployBuildSocketInitData($Request,$this->UserInfo);
+        return $this->succeed($DeployService->deployBuildSocketInit($data['buildServer'],$data['ServerData'],$data['deployBuilGitInfo'],$data['UserInfoId'],$data['deployData']));
+    }
 
     /**
      * @Author pizepei

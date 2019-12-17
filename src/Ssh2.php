@@ -117,7 +117,10 @@ class Ssh2
         }
         return $shell;
     }
-
+    public function ssh2_disconnect()
+    {
+        return ssh2_disconnect($this->conn);
+    }
     /**
      * @Author pizepei
      * @Created 2019/6/19 22:13
@@ -173,7 +176,7 @@ class Ssh2
         $maxTime = time();
         $break = false;
         while(time()-$time < $max || time()-$maxTime <$astrict) {
-            usleep(40000);
+            usleep(60000);
             $fgets = fgets($parasitiferShell);
             if ($break){
                 break;

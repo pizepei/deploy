@@ -4,11 +4,17 @@
 namespace pizepei\deploy\service;
 
 
+use pizepei\deploy\model\DeployServerConfigModel;
+
 class BasicBtApiSerice
 {
     private $BT_KEY = "";  	//接口密钥
     private $BT_PANEL = "";	   		//面板地址
-
+    /**
+     * 批量任务api
+     * @var array
+     */
+    private $API = [];
     /**
      * 初始化
      * @param [type] $bt_panel 宝塔接口地址
@@ -17,6 +23,51 @@ class BasicBtApiSerice
     public function __construct($bt_panel = null,$bt_key = null){
         if($bt_panel) $this->BT_PANEL = $bt_panel;
         if($bt_key) $this->BT_KEY = $bt_key;
+    }
+
+    function batchInit(array $host_group)
+    {
+        $ServerData = DeployServerConfigModel::table()
+            ->where(['group_id'=>[
+                'in',$host_group]
+                ,'status'=>2
+            ])
+            ->fetchAll(['server_ip','bt_api']);
+        if (!$ServerData) return ['stats'=>false,'data'=>[]];
+
+        $stats = true;
+        # 进行批量接口任务之前批量检测目标接口是否正常
+        foreach ($ServerData as $value)
+        {
+            if (!isset( $value['bt_api']['port'] )) error('分组内的'.$value['server_ip'].'没有tb api 配置 port');
+            if (!isset( $value['bt_api']['key'] )) error('分组内的'.$value['server_ip'].'没有tb api 配置 key');
+            $this->API[$value['server_ip']] = ['url'=>'http://'.$value['server_ip'].':'.$value['bt_api']['port'],'key'=>$value['bt_api']['key']];
+            $this->batchConfig($value['server_ip']);
+            $resIs = $this->GetSystemTotal();
+            if (!$resIs) $stats = false;
+            $res[$value['server_ip']] = $resIs;
+        }
+        return ['stats'=>$stats,'data'=>$res];
+    }
+
+    /**
+     * @Author 皮泽培
+     * @Created 2019/12/17 10:05
+     * @param string $ip
+     * @title  设置接口参数
+     * @return bool
+     * @throws \Exception
+     */
+    public function batchConfig(string $ip)
+    {
+        if (!isset( $this->API[$ip] )) error('分组内的'.$ip.'没有tb api 配置');
+
+        if (!isset( $this->API[$ip]['key'] )) error('分组内的'.$ip.'没有tb api 配置 key');
+        if (!isset( $this->API[$ip]['url'] )) error('分组内的'.$ip.'没有tb api 配置 url');
+
+        $this->BT_KEY =$this->API[$ip]['key'];
+        $this->BT_PANEL = $this->API[$ip]['url'];
+        return true;
     }
 
     /**
