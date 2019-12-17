@@ -935,12 +935,16 @@ class BasicsDeploy extends Controller
         if ($composerFiles){
             $data['msg'] = '获取PHP项目配置成功';
             $data['type'] = 'php';
-            $data['content'] = base64_decode($composerFiles['list']['content']);
+            $data['content']['buildConfig'] = base64_decode($composerFiles['list']['content']);
+            # Deploy.php配置信息
+            $Deploy = app()->InitializeConfig()->get_const('\Deploy');
+            $data['content']['deployonfig'] = app()->InitializeConfig()->setConfigString('Deploy',$Deploy,'','Deploy');
             $this->succeed($data,'获取PHP项目配置成功');
         }else if ($packageFiles){
             $data['msg'] = '获取前端项目配置成功';
             $data['type'] = 'html';
-            $data['content'] = base64_decode($packageFiles['list']['content']);
+            $data['content']['buildConfig'] = base64_decode($packageFiles['list']['content']);
+            $data['content']['deployonfig'] = '';
             $this->succeed($data,'获取前端项目配置成功');
         }else{
             $this->error('项目文件不存在');
@@ -1037,6 +1041,10 @@ class BasicsDeploy extends Controller
      *          sha [string] 版本sha
      *          system [uuid] 归属系统id
      *          branch [string] 分支
+     *          name [string] 构建名称
+     *          remark [string] 构建备注
+     *          buildConfig [string] 构建配置如composer.json内容
+     *          deployonfig [string]部署配置
      * @return array [json]
      *    data [raw]
      * @throws \Exception
@@ -1057,7 +1065,7 @@ class BasicsDeploy extends Controller
             $this->error('构建服务器繁忙！');
         }
         Cache::set(['deploy','BuildSocket'],$Request->post(),10,'deploy');
-        return $this->succeed($DeployService->deployBuildSocket($data['buildServer'],$data['ServerData'],$data['deployBuilGitInfo'],$data['UserInfoId'],$data['deployData']));
+        return $this->succeed($DeployService->deployBuildSocket($data['buildServer'],$data['ServerData'],$data['deployBuilGitInfo'],$data['UserInfoId'],$data['deployData'],$Request));
     }
     /**
      * @Author pizepei
@@ -1068,6 +1076,8 @@ class BasicsDeploy extends Controller
      *          sha [string] 版本sha
      *          system [uuid] 归属系统id
      *          branch [string] 分支
+     *          name [string] 构建名称
+     *          remark [string] 构建备注
      * @return array [json]
      *    data [raw]
      * @throws \Exception

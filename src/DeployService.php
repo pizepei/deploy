@@ -10,6 +10,7 @@
 namespace pizepei\deploy;
 
 use pizepei\deploy\model\interspace\DeployInterspaceModel;
+use pizepei\deploy\model\system\DeployBuildLogModel;
 use pizepei\deploy\model\system\DeploySystemModel;
 use pizepei\deploy\service\BasicBtApiSerice;
 use pizepei\deploy\service\BasicsGitlabService;
@@ -812,7 +813,16 @@ class DeployService
         }
 
     }
+    public function addDeployBuildLog(array $BuildServerSsh,array $serverGroup,array $gitInfo,string $userId,array $deployData)
+    {
+        # 构建服务器信息
 
+
+        DeployBuildLogModel::table()->add();
+
+
+
+    }
     /**
      * Ssh2 对象
      * @var null
