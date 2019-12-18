@@ -1056,7 +1056,7 @@ class BasicsDeploy extends Controller
     {
         # 设置为不超时
         ignore_user_abort();
-        set_time_limit(1200);
+        set_time_limit(7200);
         $DeployService = new DeployService();
         $data = $DeployService->deployBuildSocketInitData($Request,$this->UserInfo);
         # 设置构建

@@ -611,6 +611,22 @@ class DeployService
         $this->WSClient = $Client;
         $this->WSuserId = $userId;
     }
+
+    /**
+     * @Author 皮泽培
+     * @Created 2019/12/18 17:23
+     * @title  检查composer错误
+     * @explain 检查composer错误或者前端错误
+     */
+    public function environmentDiagnose()
+    {
+        # composer diagnose 检查composer错误
+        $this->SSHobject->WSdirectFgetsXterm(['检查composer错误','composer diagnose']);
+        # 检测 构建环境不变
+        $this->SSHobject->WSdirectFgetsXterm(['npm -v','node -v','php -v','php -m']);
+    }
+
+
     /**
      * @Author 皮泽培
      * @Created 2019/12/17 14:20
@@ -631,12 +647,14 @@ class DeployService
         # 初始化 ssh
         $this->SSHobject->wsInit($this->WSClient,$this->WSuserId );
         $this->SSHobject->WSdirectFgetsXterm(['echo 连接构建主机成功！&& '.$this->getIpSSH]);
+        $this->sendBuildDeployFlow('<font color="red">执行环境检测!</font>');
         $this->sendUser(PHP_EOL.'**************连接开始测试目标主机*****************'.PHP_EOL);
 
         $this->SSHobject->WSdirectFgetsXterm(['echo 连接构建主机成功！&& pwd ']);
         echo Helper()->json_encode(['code'=>200,"msg"=>'开始检测环境','data'=>[]]);
         fastcgi_finish_request();
 
+        $this->environmentDiagnose();
         # 检测 目标集群 是否正常
         # 分别进入目标主机测试是否正常
         foreach ($serverGroup['list'] as $valueIn) {
@@ -661,7 +679,7 @@ class DeployService
             foreach ($BtRes['data'] as $k=>$v)
             {
                 usleep(10000);
-                if (!$v){
+                if (!$v && !is_array($v)){
                     $this->sendUser('IP:'.$k.' 异常'.PHP_EOL);
                 }else{
                     usleep(10000);
@@ -717,16 +735,13 @@ class DeployService
         # 进入目录
         $Shell[] = 'cd '.$buildPath;
         $Shell[] = 'pwd';
-
+        $this->sendBuildDeployFlow('正在clone检出项目');
         $Shell[] = 'echo 正在clone检出项目： '.$gitInfo['ssh_url'];
         # clone 项目
         $Shell[] = 'git clone -q '.$gitInfo['ssh_url'].' '.$gitInfo['name'];
         #    进入clone构建目录
         $Shell[] = 'cd '.$buildPath.'/'.$gitInfo['name'];
-
-        # composer diagnose 检查composer错误
-//        $Shell[] = ['composer diagnose',60];
-
+        $Shell[] = 'pwd ';
         # 进入对应 sha
         if ($gitInfo['sha'] !=='update'){
             $Shell[] = 'echo 切换到对应的sha版本：'.$gitInfo['sha'];
@@ -736,7 +751,10 @@ class DeployService
                 $Shell[] = 'echo PHP项目进行：composer install';
                 $Shell[] = ['composer install  --no-dev',700];
             }else if ($gitInfo['type'] === 'html'){
-
+                # npm install  gulp
+                $Shell[] = 'echo 前端项目进行：npm install && gulp';
+                $Shell[] = 'npm install';
+                $Shell[] = ['gulp',100];
             }
         }elseif ($gitInfo['sha'] ==='update'){
             # 针对性构建
@@ -744,7 +762,9 @@ class DeployService
                 $Shell[] = 'echo PHP项目进行：composer update';
                 $Shell[] = ['composer update',1200];
             }else if ($gitInfo['type'] === 'html'){
-
+                $Shell[] = 'echo 前端项目进行：npm install && gulp';
+                $Shell[] = 'npm install';
+                $Shell[] = ['gulp',100];
             }
         }
         # 写入配置文件
@@ -752,14 +772,18 @@ class DeployService
             $Shell[] = 'echo PHP项目进行：写入Deploy.php';
             $Shell[] = ['echo '."'".$deployData['deployConfig']."' > ./config/Deploy.php",110];
         }else if ($gitInfo['type'] === 'html'){
-
+            # 修改引入目录
         }
 
+        if ($gitInfo['type'] === 'php'){
+            $this->sendBuildDeployFlow('PHP项目进行composer '.$gitInfo['sha'].'再写入Deploy.php');
+        }else{
+            $this->sendBuildDeployFlow('前端项目进行 暂时没有操作');
+        }
+        $this->sendBuildDeployFlow('对代码进行压缩并传输到'.count($serverGroup['list']).'台目标主机');
         # 执行构压缩命令tar czvf filename.tar dirname
         $Shell[] = 'cd ..';     # 返回上级目录
         $Shell[] = 'echo 压缩项目文件：'.$gitInfo['name'].'.tar ';
-        $Shell[] = 'sleep 2';
-
         $Shell[] = ['tar czvf '.$gitInfo['name'].'.tar '.$gitInfo['name'].'  > '.$gitInfo['name'].'.log',135];  # 进行压缩
         # 复制压缩包到目标服务器scp -P 22    /deploy/build/pizepei/normative.git/2019_12-12__15_49_43/update/normative.tar    root@107.172.***.**:/root/normative.tar
         $this->hostList = '';
@@ -777,6 +801,7 @@ class DeployService
 
     public function targetDeployBuildSocket(array $serverGroup,array $gitInfo)
     {
+
         $this->SSHobject->WSdirectFgetsXterm([$this->getIpSSH,'echo -e "\033[31m *****************开始连接目标主机***************** \033[0m"']);
         # 主项目构建完成 分别进入目标主机 继续构建
         foreach ($serverGroup['list'] as $valueIn) {
@@ -849,19 +874,36 @@ class DeployService
         $this->SSHobject->WSdirectFgetsXterm(['echo 连接构建主机成功！&& pwd ']);
         echo Helper()->json_encode(['code'=>200,"msg"=>'开始构建'.$gitInfo['name'].'['.$gitInfo['type'].'] 项目','data'=>['xtermSon'=>$xtermSon??'']]);
         fastcgi_finish_request();
+        $this->sendBuildDeployFlow('<font color="red">开始构建'.$gitInfo['name'].'['.$gitInfo['type'].']项目</font>');
         # 在连接宿主机 parasitifer 上进行构建并传输到目标服务器
         $this->parasitiferDeployBuildSocket($serverGroup, $gitInfo,$deployData);
         # 分别进入目标服务器 解压代码到对应的www 临时目录 设置代码文件权限为www
+        $this->sendBuildDeployFlow('批量进入目标主机解压项目到对应目录并设置软连接和目录权限');
         $this->targetDeployBuildSocket($serverGroup, $gitInfo);
         # 断开构建主机连接
         $this->SSHobject->ssh2_disconnect();
         # 处理结果
+        $this->sendBuildDeployFlow('断开构建服务器并进行日志处理！');
         $this->resultOfHandling();
-
     }
+
+    /**
+     * @Author 皮泽培
+     * @Created 2019/12/18 16:44
+     * @param string $content
+     * @title  发送构建流程信息
+     * @throws \Exception
+     */
+    public function sendBuildDeployFlow(string $content)
+    {
+        $this->sendUser(date('d号 H:i:s').': '.$content,'flow','buildDeployFlow');
+    }
+
     # 处理结果
     public function resultOfHandling()
     {
+
+        $this->sendBuildDeployFlow('执行结束!');
         $this->sendUser(PHP_EOL.'--------------'.date('Y-m-d H:i:s').'---------------');
         $this->sendUser(PHP_EOL.'---------------构建执行完成--------------','构建执行完成','PerformTheEnd');
         Cache::set(['deploy','BuildSocket'],null,0,'deploy');
