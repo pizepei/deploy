@@ -751,7 +751,7 @@ class DeployService
                 $Shell[] = ['composer install  --no-dev',700];
             }else if ($gitInfo['type'] === 'html'){
                 # npm install  gulp
-                $Shell[] = 'echo 前端项目进行：npm install 和 gulp';
+                $Shell[] = 'echo 前端项目进行构建';
                 $Shell[] = 'npm install';
                 $Shell[] = ['gulp',100];
             }
@@ -761,7 +761,7 @@ class DeployService
                 $Shell[] = 'echo PHP项目进行：composer update';
                 $Shell[] = ['composer update',1200];
             }else if ($gitInfo['type'] === 'html'){
-                $Shell[] = 'echo 前端项目进行：npm install && gulp';
+                $Shell[] = 'echo 前端项目进行：npm install 和 gulp';
                 $Shell[] = 'npm install';
                 $Shell[] = ['gulp',100];
             }
