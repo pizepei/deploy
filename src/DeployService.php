@@ -623,7 +623,9 @@ class DeployService
         # composer diagnose 检查composer错误
         $this->SSHobject->WSdirectFgetsXterm(['检查composer错误','composer diagnose']);
         # 检测 构建环境不变
-        $this->SSHobject->WSdirectFgetsXterm(['npm -v','node -v','php -v','php -m']);
+        $this->SSHobject->WSdirectFgetsXterm(['npm -v']);
+        $this->SSHobject->WSdirectFgetsXterm(['node -v']);
+        $this->SSHobject->WSdirectFgetsXterm(['php -v']);
     }
 
 
