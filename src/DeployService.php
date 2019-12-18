@@ -724,11 +724,8 @@ class DeployService
         $deployBuildPath = '/deploy/build/'.$name;
         # 创建目录 (项目目录)
         $Shell[] = ['mkdir -p '.$deployBuildPath,5];
-        $Shell[] = 'cd /deploy/build/'.$name;
-        $Shell[] = 'echo 目录下历史记录：';
-        $Shell[] = 'pwd';
-        $Shell[] = 'll';
-        $Shell[] = 'sleep 3';
+        $Shell[] = ['cd /deploy/build/'.$name,'echo 目录下历史记录：', 'pwd','ll'];
+        $Shell[] = 'sleep 1';
         # 创建带
         $Shell[] = 'echo 执行命令创建目录：'.$buildPath;
         $Shell[] = ['mkdir -p '.$buildPath,5];
@@ -752,7 +749,7 @@ class DeployService
                 $Shell[] = ['composer install  --no-dev',700];
             }else if ($gitInfo['type'] === 'html'){
                 # npm install  gulp
-                $Shell[] = 'echo 前端项目进行：npm install && gulp';
+                $Shell[] = 'echo 前端项目进行：npm install 和 gulp';
                 $Shell[] = 'npm install';
                 $Shell[] = ['gulp',100];
             }
