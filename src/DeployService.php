@@ -449,62 +449,6 @@ class DeployService
 
     }
 
-    /**
-     * @Author 皮泽培
-     * @Created 2019/12/12 11:33
-     * @param $BuildServerSsh
-     * @param $serverGroup
-     * @param $gitInfo
-     * @param $project
-     * @return array [json]
-     * @title  通过参数构建项目
-     */
-    public function sshProjectBuild(array $BuildServerSsh,array $serverGroup,array $gitInfo)
-    {
-        # 设置为不超时
-        ignore_user_abort();
-        set_time_limit(500);
-        # 准备目录
-        $name = explode(':',$gitInfo['ssh_url']);
-        $name = end($name);//获取分支名称
-        # git checkout b0362a895d39061c0bc6f05c575af47de1b3f702
-        $date = date('Y_m-d__H_i_s');
-        $buildPath = '/deploy/build/'.$name.'/'.$date.'/'.$gitInfo['sha'];
-        # 创建目录
-        $Shell[] = ['pwd & mkdir -p '.$buildPath,5];
-        # 进入目录
-        $Shell[] = ['cd '.$buildPath,2];
-        # clone 项目
-        $Shell[] = 'git clone -q '.$gitInfo['ssh_url'].' '.$gitInfo['name'];
-        #    进入clone构建目录
-        $Shell[] = 'cd '.$buildPath.'/'.$gitInfo['name'];
-        # 进入对应 sha
-        if ($gitInfo['sha'] !=='update'){
-            $Shell[] = ['git checkout '.$gitInfo['sha'].' & composer install  --no-dev',466];
-        }elseif ($gitInfo['sha'] ==='update'){
-            $Shell[] = ['composer update',110];
-        }
-        # 执行构压缩命令tar czvf filename.tar dirname
-        $Shell[] = 'cd ..';     # 返回上级目录
-        $Shell[] = ['tar czvf '.$gitInfo['name'].'.tar '.$gitInfo['name'],135];  # 进行压缩
-        # 复制压缩包到目标服务器scp -P 22    /deploy/build/pizepei/normative.git/2019_12-12__15_49_43/update/normative.tar    root@107.172.***.**:/root/normative.tar
-//        foreach ($serverGroup as $value)
-//        {
-//            $Shell[] = ['scp -P '.$value['port'].' /deploy/build/'.$name.'/'.$date.'/'.$gitInfo['name'].'.tar '.$value['username'].'@'.$value['host'].':'.$value['path'].$gitInfo['name'].'.tar',120];
-//        }
-//        $Shell[] = 'pwd';
-
-        # 尝试连接构建服务器
-        /**
-         * 连接宿主机 parasitifer 进行构建
-         */
-
-        $parasitiferSSH = new Ssh2($BuildServerSsh);
-        $execXtermResult = $this->execXterm($parasitiferSSH,$Shell);
-
-        return $execXtermResult;
-
-    }
     public $getIpSSH = "ifconfig -a |grep inet |grep -v 127.0.0.1 |grep -v inet6|awk '{print $2}'".' |tr -d "addr:"';
 
     /**
@@ -521,9 +465,13 @@ class DeployService
     public function deployBuildSocketInitData(Request $Request,$UserInfo)
     {
         $System = DeploySystemModel::table()->get($Request->post('system'));
+        $deployData['system'] = $System;
+        $deployData['request'] =$Request->post();
+
         if (!$System) $this->error('系统不存在');
         # 查询空间信息判断是否有查看权限
         $Interspace = DeployInterspaceModel::table()->get($System['interspace_id']);
+        $deployData['interspace'] = $Interspace;
         if (empty($Interspace)) $this->error('空间不存在');
         if ($Interspace['owner'] !==$UserInfo['id']){
             if (!in_array($UserInfo['id'],$Interspace['maintainer']))$this->error('无权限');
@@ -533,12 +481,23 @@ class DeployService
         $gitProjects = $service->apiRequest($UserInfo['id'],'projects/'.$Request->post('gitlab_id'));
         if (empty($gitProjects['list'])){ $this->error('项目不存在或者没有项目权限');}
         $gitProjects = $gitProjects['list'];
+        $deployData['gitProjects'] = $gitProjects;
+        # 获取项目类型
         $gitProjectsFiles = $service->apiRequest($UserInfo['id'],'projects/'.$Request->post('gitlab_id').'/repository/files?file_path=composer.json&ref='.$Request->post('branch'),'','','private',false);
+        $date = date('Y_m_d_H_i_s');
+        $projects = str_replace(['/',':'],['_','_'],$gitProjects['ssh_url_to_repo']);
+        $branch = $Request->post('branch');
         $deployBuilGitInfo =  [
-            'ssh_url'   =>$gitProjects['ssh_url_to_repo'],
-            'sha'       =>'update',
-            'name'      =>$gitProjects['name'],
-            'type'      =>$gitProjectsFiles?'php':'html',
+            'gitlab_id'         =>$Request->post('gitlab_id'),
+            'date'              =>$date,
+            'ssh_url_to_repo'   =>$gitProjects['ssh_url_to_repo'],
+            'sha'               =>$Request->post('sha'),
+            'type'              =>$gitProjectsFiles?'php':'html',
+            'name'              =>$gitProjects['name'],
+            # 统一在deploy/build下  以空间code_系统code  + ssh_url  + 分支
+            'buildPath' =>'/deploy/build/'.$Interspace['code'].'_'.$System['code'].'/'.$projects.'_'.$branch.'_'.$Request->post('sha').'/'.$date.'/',# 构建服务器上的构建的目录,
+            'projects'  =>$projects,
+            'branch'    =>$branch,
         ];
         # 获取远程生产运行主机信息
         $ServerData = DeployServerConfigModel::table()
@@ -549,22 +508,22 @@ class DeployService
             ->fetchAll();
         if (empty($ServerData)){$this->error('没有远程生产运行主机信息');}
         # 处理服务器数据 远程生产运行主机信息
-        $date = date('Y_m_d_H_i_s');
         foreach ($ServerData as &$value)
         {
-            $value['username'] = $value['ssh2_user'];
-            $value['port'] = $value['ssh2_port'];
-            $value['password'] = $value['ssh2_password'];
-            $value['host'] = $value['server_ip'];
-            $value['path'] =        '/deploy/tmp/'.$Interspace['code'].'_'.$System['code'].'/';# 保存压缩包的目录
-            $value['runPath'] =     '/deploy/wwwroot/'.$Interspace['code'].'_'.$System['code'].'/'.$date.'/';# 解压的运行目录 被软连接的目录
-            $value['wwwrootPath'] = '/www/wwwroot/'.$Interspace['code'].'_'.$System['code'];        # nginx 网站指定运的行目录
+            $value['username']      = $value['ssh2_user'];
+            $value['port']          = $value['ssh2_port'];
+            $value['password']      = $value['ssh2_password'];
+            $value['host']          = $value['server_ip'];
+            $value['path']          = '/deploy/tmp/'.$Interspace['code'].'_'.$System['code'].'/';# 保存压缩包的目录
+            $value['runPath']       = '/deploy/wwwroot/'.$Interspace['code'].'_'.$System['code'].'/'.$date.'/';# 解压的运行目录 被软连接的目录
+            $value['wwwrootPath']   = '/www/wwwroot/'.$Interspace['code'].'_'.$System['code'];        # nginx 网站指定运的行目录
         }
         $ServerDataS['list'] =$ServerData;
-        $ServerDataS['id'] =$System['host_group'];
+        $ServerDataS['id'] = $System['host_group'];
         # Deploy.php配置信息
         $Deploy = app()->InitializeConfig()->get_const('\Deploy');
-        $deployData['deployConfig'] = app()->InitializeConfig()->setConfigString('Deploy',$Deploy,'','Deploy');
+        $deployData['deployConfigArray'] = $Deploy;
+        $deployData['deployConfigText'] = app()->InitializeConfig()->setConfigString('Deploy',$Deploy,'','Deploy');
         return ['buildServer'=>\Deploy::buildServer,'ServerData'=>$ServerDataS,'deployBuilGitInfo'=>$deployBuilGitInfo,'UserInfoId'=>$UserInfo['id'],'deployData'=>$deployData];
     }
 
@@ -708,6 +667,48 @@ class DeployService
 
     /**
      * @Author 皮泽培
+     * @Created 2019/12/19 14:06
+     * @param $action
+     * @param $type
+     * @title  针对性的对不同项目进行构建
+     * @explain 路由功能说明
+     * @throws \Exception
+     */
+    public function TargetedTask($action,$type)
+    {
+        # 后期在数据库中不错构建流程模板在构建时选择  在这里进行执行
+
+        # 针对性 的更新依赖操作
+        if ($action ==='update'){
+            if ($type ==='php'){
+                    $Shell[] = ['composer update',1200];
+                }else{
+                $Shell[] = 'echo 前端项目进行构建';
+//                    $Shell[] = 'npm install';
+//                    $Shell[] = ['gulp',100];
+                }
+        }else{
+            $Shell[] = 'echo 切换到对应的sha ：'.$action;
+            $Shell[] = 'git  checkout '.$action;
+            if ($type ==='php'){
+                $Shell[] = ['composer install  --no-dev',1200];
+            }else{
+                $Shell[] = 'echo 前端项目进行构建';
+//                $Shell[] = 'npm install';
+//                $Shell[] = ['gulp',100];
+            }
+        }
+        # 发送流程
+        if ($type === 'php'){
+            $this->sendBuildDeployFlow('PHP项目进行composer  再写入Deploy.php');
+        }else{
+            $this->sendBuildDeployFlow('前端项目进行：npm install 和 gulp');
+        }
+        $this->SSHobject->WSdirectFgetsXterm($Shell);
+    }
+
+    /**
+     * @Author 皮泽培
      * @Created 2019/12/17 15:44
      * @param array $serverGroup
      * @param array $gitInfo
@@ -717,67 +718,29 @@ class DeployService
      */
     public function parasitiferDeployBuildSocket(array $serverGroup,array $gitInfo,array $deployData)
     {
-        # 准备目录
-        $name = explode(':',$gitInfo['ssh_url']);
-        $name = end($name);//获取分支名称
-        # git checkout b0362a895d39061c0bc6f05c575af47de1b3f702
-        $date = date('Y_m-d__H_i_s');
-        $buildPath = '/deploy/build/'.$name.'/'.$date.'/'.$gitInfo['sha'];
-        $deployBuildPath = '/deploy/build/'.$name;
         # 创建目录 (项目目录)
-        $Shell[] = ['mkdir -p '.$deployBuildPath,5];
-        $Shell[] = ['cd /deploy/build/'.$name,'echo 目录下历史记录：', 'pwd','ll'];
-        $Shell[] = 'sleep 1';
-        # 创建带
-        $Shell[] = 'echo 执行命令创建目录：'.$buildPath;
-        $Shell[] = ['mkdir -p '.$buildPath,5];
+        $Shell[] = 'echo 执行命令创建目录：'.$gitInfo['buildPath'];
+        $Shell[] = 'mkdir -p '.$gitInfo['buildPath'];
+        $Shell[] = ['cd '.$gitInfo['buildPath'].' ../','echo 目录下历史记录：', 'pwd','ll','sleep 3'];
         # 进入目录
-        $Shell[] = 'cd '.$buildPath;
+        $Shell[] = 'cd '.$gitInfo['buildPath'];
         $Shell[] = 'pwd';
         $this->sendBuildDeployFlow('正在clone检出项目');
-        $Shell[] = 'echo 正在clone检出项目： '.$gitInfo['ssh_url'];
+        $Shell[] = 'echo 正在clone检出项目： '.$gitInfo['ssh_url_to_repo'];
         # clone 项目
-        $Shell[] = 'git clone -q '.$gitInfo['ssh_url'].' '.$gitInfo['name'];
+        $Shell[] = 'git clone -q '.$gitInfo['ssh_url_to_repo'].' '.$gitInfo['name'];
         #    进入clone构建目录
-        $Shell[] = 'cd '.$buildPath.'/'.$gitInfo['name'];
+        $Shell[] = 'cd '.$gitInfo['buildPath'].$gitInfo['name'];
         $Shell[] = 'pwd ';
-        # 进入对应 sha
-        if ($gitInfo['sha'] !=='update'){
-            $Shell[] = 'echo 切换到对应的sha版本：'.$gitInfo['sha'];
-            $Shell[] = ['git checkout '.$gitInfo['sha'],5];
-            # 针对性构建
-            if ($gitInfo['type'] === 'php'){
-                $Shell[] = 'echo PHP项目进行：composer install';
-                $Shell[] = ['composer install  --no-dev',700];
-            }else if ($gitInfo['type'] === 'html'){
-                # npm install  gulp
-                $Shell[] = 'echo 前端项目进行构建';
-                $Shell[] = 'npm install';
-                $Shell[] = ['gulp',100];
-            }
-        }elseif ($gitInfo['sha'] ==='update'){
-            # 针对性构建
-            if ($gitInfo['type'] === 'php'){
-                $Shell[] = 'echo PHP项目进行：composer update';
-                $Shell[] = ['composer update',1200];
-            }else if ($gitInfo['type'] === 'html'){
-                $Shell[] = 'echo 前端项目进行：npm install 和 gulp';
-                $Shell[] = 'npm install';
-                $Shell[] = ['gulp',100];
-            }
-        }
+        $this->SSHobject->WSdirectFgetsXterm($Shell);
+        # 针对性的进行 不同项目的简单构建
+        $this->TargetedTask($gitInfo['sha'],$gitInfo['type']);
         # 写入配置文件
         if ($gitInfo['type'] === 'php'){
             $Shell[] = 'echo PHP项目进行：写入Deploy.php';
-            $Shell[] = ['echo '."'".$deployData['deployConfig']."' > ./config/Deploy.php",110];
+            $Shell[] = ['echo '."'".$deployData['deployConfigText']."' > ./config/Deploy.php",110];
         }else if ($gitInfo['type'] === 'html'){
             # 修改引入目录
-        }
-
-        if ($gitInfo['type'] === 'php'){
-            $this->sendBuildDeployFlow('PHP项目进行composer '.$gitInfo['sha'].'再写入Deploy.php');
-        }else{
-            $this->sendBuildDeployFlow('前端项目进行 暂时没有操作');
         }
         $this->sendBuildDeployFlow('对代码进行压缩并传输到'.count($serverGroup['list']).'台目标主机');
         # 执行构压缩命令tar czvf filename.tar dirname
@@ -789,7 +752,7 @@ class DeployService
         foreach ($serverGroup['list'] as $value)
         {
             $Shell[] = 'echo 远程传输压缩包到主机：@'.$value['host'];
-            $Shell[] = ['scp -P '.$value['port'].' /deploy/build/'.$name.'/'.$date.'/'.$gitInfo['sha'].'/'.$gitInfo['name'].'.tar '.$value['username'].'@'.$value['host'].':'.$value['path'].$gitInfo['name'].'.tar',120];
+            $Shell[] = ['scp -P '.$value['port'].' '.$gitInfo['buildPath'].$gitInfo['name'].'.tar '.$value['username'].'@'.$value['host'].':'.$value['path'].$gitInfo['name'].'.tar',200];
             $xtermSon[md5($value['host'])] = $value['host'];
             $this->hostList .= $value['name'].'['.$value['host'].']'.PHP_EOL;
         }
@@ -798,6 +761,15 @@ class DeployService
         $this->SSHobject->WSdirectFgetsXterm($Shell);
     }
 
+    /**
+     * @Author 皮泽培
+     * @Created 2019/12/19 10:12
+     * @param array $serverGroup
+     * @param array $gitInfo
+     * @return array [json] 定义输出返回数据
+     * @title  远程目标主机 继续构建
+     * @throws \Exception
+     */
     public function targetDeployBuildSocket(array $serverGroup,array $gitInfo)
     {
 
@@ -826,7 +798,6 @@ class DeployService
             $this->SSHobject->WSdirectFgetsXterm('ln -snf '.$valueIn['runPath'].$gitInfo['name'].' '.$valueIn['wwwrootPath']);# 设置软连接
             $this->SSHobject->WSdirectFgetsXterm('cd '.$valueIn['wwwrootPath']); # 进入运行目录
             $this->SSHobject->WSdirectFgetsXterm('chown -R www:www '.$valueIn['wwwrootPath']); # 设置运行目录的权限
-//            $this->SSHobject->WSdirectFgetsXterm('chown -R www:www ./ ..');
             $this->SSHobject->WSdirectFgetsXterm('pwd && ll');
             $this->sendUser('echo ************完成主机：'.$valueIn['name'].'['.$valueIn['host'].']构建***************');
             $this->sendUser('************从主机：'.$valueIn['name'].'['.$valueIn['host'].']中退出***************');
@@ -839,17 +810,35 @@ class DeployService
     }
     public function addDeployBuildLog(array $BuildServerSsh,array $serverGroup,array $gitInfo,string $userId,array $deployData)
     {
+        $data =[
+            'name'              =>$deployData['request']['name'],
+            'remark'            =>$deployData['request']['remark'],
+            'interspace_id'     =>$deployData['interspace']['id'],
+            'gitlab_id'         =>$gitInfo['gitlab_id'],
+            'system_id'         =>$deployData['system']['id'],
+            'sha'               =>$gitInfo['sha'],
+            'date'              =>$gitInfo['date'],
+            'branch'            =>$gitInfo['branch'],
+            'ssh_url_to_repo'   =>$gitInfo['ssh_url_to_repo'],
+            'build_path'        =>$gitInfo['buildPath'],
+            'projects_type'     =>$gitInfo['type'],
+            'projects_name'     =>$gitInfo['name'],
+            'log'               =>[''],
+            'build_server'      =>$BuildServerSsh,
+            'server_group'      =>$serverGroup,
+            'account_id'        =>$userId,
+            'deploy_data_array'  =>$deployData['deployConfigArray'],
+            'deploy_data_text'  =>$deployData['deployConfigText'],
+            'build_config'      =>['COMMENT'=>'构建配置如composer配置',],
+            'status'=>3,
+        ];
         # 构建服务器信息
-
-
-        DeployBuildLogModel::table()->add();
-
-
+        return DeployBuildLogModel::table()->add($data);
 
     }
     /**
      * Ssh2 对象
-     * @var null
+     * @var Ssh2
      */
     public $SSHobject = null;
     /**
@@ -870,12 +859,15 @@ class DeployService
         $this->SSHobject = new Ssh2($BuildServerSsh);
         # 初始化 ssh
         $this->SSHobject->wsInit($this->WSClient,$this->WSuserId);
-        $this->SSHobject->WSdirectFgetsXterm(['echo 连接构建主机成功！&& pwd ']);
+        $this->SSHobject->WSdirectFgetsXterm($this->getIpSSH);
+//        $this->addDeployBuildLog( $BuildServerSsh, $serverGroup, $gitInfo, $userId, $deployData);
         echo Helper()->json_encode(['code'=>200,"msg"=>'开始构建'.$gitInfo['name'].'['.$gitInfo['type'].'] 项目','data'=>['xtermSon'=>$xtermSon??'']]);
-        fastcgi_finish_request();
+
         $this->sendBuildDeployFlow('<font color="red">开始构建'.$gitInfo['name'].'['.$gitInfo['type'].']项目</font>');
         # 在连接宿主机 parasitifer 上进行构建并传输到目标服务器
         $this->parasitiferDeployBuildSocket($serverGroup, $gitInfo,$deployData);
+        fastcgi_finish_request();
+
         # 分别进入目标服务器 解压代码到对应的www 临时目录 设置代码文件权限为www
         $this->sendBuildDeployFlow('批量进入目标主机解压项目到对应目录并设置软连接和目录权限');
         $this->targetDeployBuildSocket($serverGroup, $gitInfo);

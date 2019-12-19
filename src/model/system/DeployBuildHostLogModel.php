@@ -8,7 +8,7 @@ namespace pizepei\deploy\model\system;
 
 use pizepei\model\db\Model;
 
-class DeployHostLogModel extends Model
+class DeployBuildHostLogModel extends Model
 {
 
     /**

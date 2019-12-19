@@ -17,6 +17,7 @@ use pizepei\deploy\model\DeployServerConfigModel;
 use pizepei\deploy\model\DeployServerGroupModel;
 use pizepei\deploy\model\DeployServerRelevanceModel;
 use pizepei\deploy\model\GitlabAccountModel;
+use pizepei\deploy\model\system\DeployBuildLogModel;
 use pizepei\deploy\model\system\DeploySystemDbConfigModel;
 use pizepei\deploy\model\system\DeploySystemModel;
 use pizepei\deploy\model\interspace\DeployInterspaceModel;
@@ -47,7 +48,6 @@ class BasicsDeploy extends Controller
         'basePath'=>'/deploy/',//基础路由
     ];
 
-
     /**
      * @param \pizepei\staging\Request $Request
      *      get [object] 参数
@@ -56,15 +56,47 @@ class BasicsDeploy extends Controller
      * @title  命令行cli模式初始化项目
      * @explainphp index_cli.php --route /deploy/initDeploy   --data user=pizepei   --domain oauth.heil.top
      * @baseAuth DeployAuth:public
-     * @router get ssh
+     * @router get spidersWeb
      * @throws \Exception
      */
-    public function ssh(Request $Request)
+    public function spidersWeb(Request $Request)
     {
-        $url = 'https://gitlab.heil.top/oauth/authorize?client_id=65edeb2ca393a1aebda6d7c1a62fb7514efdb3c824163e75d44412ea06fcb5e0&redirect_uri='.urlencode('https://oauth.heil.top').'&response_type=code';#
+        $res = \Helper()->httpRequest(
+            'https://wap.91160.com/doctor/oldschedule.html?unit_id=100&dep_id=200006123&doctor_id=21517&cid=16',
+            '',
+            [
+//            'header'=>[
+//                'accept: application/json, text/plain, */*',
+//                'accept-encoding: gzip, deflate, br',
+//                'accept-language: zh-CN,zh;q=0.9,en;q=0.8',
+//                'cache-control: no-cache',
+                'cookie: __jsluid_s=83e6b0a2c06a7c78d3d8cbd1913b787f; Hm_lvt_2e7d40bfa5ae51733e63c04f3d028dd1=1576655795; channel_id_v2=MTY=; location_city_id_v2=NQ==; client_uid_v2=LQmQiIq16DVOVnWn%2FxqY7dcCJT3DjmOqnp%2B%2Bzp6uTie4fL6hLHe9jZjHxIvhkv4m; _ga=GA1.2.31862618.1576655813; _gid=GA1.2.741524040.1576655813; isLogined_v2=MQ==; _reg_phone__v2=wFmoGqgi0GJiKMJSRkEkdw%3D%3D; SHADOWMAN_v2=eyJrZXkiOiIzYzkyMTJjMGZjZjZmM2EzMTJjYzBlNDIxZmQ5ZDhmNCIsInZhbCI6ImM5MWYzZDlmNGFhZWU0ZDRlYmRkZTg1OGJkODIyOTlhIiwidG0iOjE1NzY2NTYwNzF9; last_login_v2=MTgwMjg3NTAzOTU=; Hm_lpvt_2e7d40bfa5ae51733e63c04f3d028dd1=1576716903; Hm_lpvt_d4fe452b4b4d3072dfda2f68e7a19668_v2=2VwdbV7SFYzKz4ntpTWnDw%3D%3D; Hm_lvt_d4fe452b4b4d3072dfda2f68e7a19668_v2=2VwdbV7SFYzKz4ntpTWnDw%3D%3D',
+                'pragma: no-cache',
+                'referer: https://wap.91160.com/vue/doctor/detail.html?type=guahao&unit_id=100&dep_id=200006123&doc_id=21517',
+                'sec-fetch-mode: cors',
+                'sec-fetch-site: same-origin',
+                'user-agent: Mozilla/5.0 (Linux; Android 4.4.2; Nexus 4 Build/KOT49H) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Mobile Safari/537.36',
+                'x-requested-with: XMLHttpRequest',
+//            ],
+//                'header'=>[
+////                    'Accept: */*',
+////                    'Accept-Encoding: gzip, deflate',
+////                    'Accept-Language: zh-CN',
+////                    'Cache-Control: no-cache',
+////                    'Connection: keep-alive',
+////                    'Content-type: application/x-www-form-urlencoded',
+//                    'Cookie: UM_distinctid=16e8b9e9a7a1fa-0a6c7403c609d5-2393f61-1fa400-16e8b9e9a7b1b0; cs_t=12f17ac6675dfad8d3d4346318992686cf325e38d65dfad8d3d4374418560101',
+//                    'Host: beenest.try.csmall.com',
+//                    'Pragma: no-cache',
+////                    'Referer: http://beenest.try.csmall.com/application/system/building/15/test',
+//                    'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36',
+//                ],
 
-        echo '<a href="'.$url.'"></a>';
+//            'cookie'=>'__jsluid_s=83e6b0a2c06a7c78d3d8cbd1913b787f; Hm_lvt_2e7d40bfa5ae51733e63c04f3d028dd1=1576655795; channel_id_v2=MTY=; location_city_id_v2=NQ==; client_uid_v2=LQmQiIq16DVOVnWn%2FxqY7dcCJT3DjmOqnp%2B%2Bzp6uTie4fL6hLHe9jZjHxIvhkv4m; _ga=GA1.2.31862618.1576655813; _gid=GA1.2.741524040.1576655813; isLogined_v2=MQ==; _reg_phone__v2=wFmoGqgi0GJiKMJSRkEkdw%3D%3D; SHADOWMAN_v2=eyJrZXkiOiIzYzkyMTJjMGZjZjZmM2EzMTJjYzBlNDIxZmQ5ZDhmNCIsInZhbCI6ImM5MWYzZDlmNGFhZWU0ZDRlYmRkZTg1OGJkODIyOTlhIiwidG0iOjE1NzY2NTYwNzF9; last_login_v2=MTgwMjg3NTAzOTU=; Hm_lpvt_2e7d40bfa5ae51733e63c04f3d028dd1=1576716903; Hm_lpvt_d4fe452b4b4d3072dfda2f68e7a19668_v2=dYIo8esER7mm7zfNeNsrew%3D%3D; Hm_lvt_d4fe452b4b4d3072dfda2f68e7a19668_v2=dYIo8esER7mm7zfNeNsrew%3D%3D',
+        ]);
+        $this->succeed($res['body']);
     }
+
 
 
     /**

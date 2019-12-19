@@ -10,7 +10,6 @@ use pizepei\model\db\Model;
 
 class DeployBuildLogModel extends Model
 {
-
     /**
      * 表结构
      * @var array
@@ -23,7 +22,10 @@ class DeployBuildLogModel extends Model
             'TYPE'=>'varchar(40)', 'DEFAULT'=>'', 'COMMENT'=>'简单名称',
         ],
         'remark'=>[
-            'TYPE'=>'varchar(555)', 'DEFAULT'=>'', 'COMMENT'=>'备注信息',
+            'TYPE'=>'varchar(500)', 'DEFAULT'=>'', 'COMMENT'=>'备注信息',
+        ],
+        'build_date'=>[
+            'TYPE'=>'varchar(35)', 'DEFAULT'=>'', 'COMMENT'=>'时间格式',
         ],
         'interspace_id'=>[
             'TYPE'=>'uuid', 'DEFAULT'=>'', 'COMMENT'=>'空间id',
@@ -31,16 +33,28 @@ class DeployBuildLogModel extends Model
         'system_id'=>[
             'TYPE'=>'uuid', 'DEFAULT'=>'', 'COMMENT'=>'系统id',
         ],
-        'Host_id'=>[
-            'TYPE'=>'uuid', 'DEFAULT'=>'', 'COMMENT'=>'主机id',
+        'gitlab_id'=>[
+            'TYPE'=>'int', 'DEFAULT'=>0, 'COMMENT'=>'gitlab_id',
         ],
-        'sha'=>[
+        'gitlab_sha'=>[
             'TYPE'=>'varchar(40)', 'DEFAULT'=>'', 'COMMENT'=>'版本sha',
         ],
         'branch'=>[
-            'TYPE'=>'varchar(40)', 'DEFAULT'=>'', 'COMMENT'=>'分支信息',
+            'TYPE'=>'varchar(100)', 'DEFAULT'=>'', 'COMMENT'=>'分支信息',
         ],
-        'log'=>[
+        'ssh_url_to_repo'=>[
+            'TYPE'=>'varchar(255)', 'DEFAULT'=>'', 'COMMENT'=>'ssh_url_to_repo',
+        ],
+        'build_path'=>[
+            'TYPE'=>'varchar(500)', 'DEFAULT'=>'', 'COMMENT'=>'构建机下的压缩包地址',
+        ],
+        'projects_type'=>[
+            'TYPE'=>"ENUM('php','html')", 'DEFAULT'=>'php', 'COMMENT'=>'项目类型',
+        ],
+        'projects_name'=>[
+            'TYPE'=>"varchar(500)", 'DEFAULT'=>'', 'COMMENT'=>'项目名称',
+        ],
+        'build_log'=>[
             'TYPE'=>'json', 'DEFAULT'=>false, 'COMMENT'=>'日志信息',
         ],
         'build_server'=>[
@@ -50,10 +64,13 @@ class DeployBuildLogModel extends Model
             'TYPE'=>'json', 'DEFAULT'=>false, 'COMMENT'=>'部署目标主机信息',
         ],
         'account_id'=>[
-            'TYPE'=>'json', 'DEFAULT'=>false, 'COMMENT'=>'部署人id',
+            'TYPE'=>'uuid', 'DEFAULT'=>false, 'COMMENT'=>'部署人id',
         ],
-        'deploy_data'=>[
-            'TYPE'=>'json', 'DEFAULT'=>false, 'COMMENT'=>'部署配置',
+        'deploy_data_array'=>[
+            'TYPE'=>'json', 'DEFAULT'=>false, 'COMMENT'=>'部署配置数据',
+        ],
+        'deploy_data_text'=>[
+            'TYPE'=>'text', 'DEFAULT'=>false, 'COMMENT'=>'部署配置文件',
         ],
         'build_config'=>[
             'TYPE'=>'json', 'DEFAULT'=>false, 'COMMENT'=>'构建配置如composer配置',
@@ -63,10 +80,10 @@ class DeployBuildLogModel extends Model
         ],
         'INDEX'=>[
             ['TYPE'=>'INDEX','FIELD'=>'interspace_id','NAME'=>'interspace_id','USING'=>'BTREE','COMMENT'=>'空间id'],
-            ['TYPE'=>'INDEX','FIELD'=>'Host_id','NAME'=>'Host_id','USING'=>'BTREE','COMMENT'=>'主机id'],
             ['TYPE'=>'INDEX','FIELD'=>'system_id','NAME'=>'system_id','USING'=>'BTREE','COMMENT'=>'归属系统id'],
-            ['TYPE'=>'INDEX','FIELD'=>'sha','NAME'=>'sha','USING'=>'BTREE','COMMENT'=>'版本sha'],
+            ['TYPE'=>'INDEX','FIELD'=>'gitlab_sha','NAME'=>'gitlab_sha','USING'=>'BTREE','COMMENT'=>'gitlab_sha'],
             ['TYPE'=>'INDEX','FIELD'=>'branch','NAME'=>'branch','USING'=>'BTREE','COMMENT'=>'分支信息'],
+            ['TYPE'=>'INDEX','FIELD'=>'ssh_url_to_repo','NAME'=>'ssh_url_to_repo','USING'=>'BTREE','COMMENT'=>'分支信息'],
         ],
         'PRIMARY'=>'id',//主键
     ];
