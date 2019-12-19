@@ -796,7 +796,7 @@ class BasicsDeploy extends Controller
             if (!empty($domainRes)){$this->error('域名不需要http或者/格式错误');}
         }
         # 生成code
-        $data['code'] = Helper()->str()->str_rand(6);
+        $data['code'] = Helper()->str()->str_rand(6,'',true);
         # 部署信息
         $data['deploy'] =[
             '__EXPLOIT__'=>1,//暂时设置为1
@@ -818,7 +818,7 @@ class BasicsDeploy extends Controller
         if (!$ServerData) $this->error('主机分组中没有服务器');
         $BasicBtApiSerice = new BasicBtApiSerice();
 
-        return $this->succeed($BasicBtApiSerice->batchInit($data['host_group']));
+//        return $this->succeed($BasicBtApiSerice->batchInit($data['host_group']));
 
         foreach ($ServerData as $v)
         {
@@ -826,7 +826,7 @@ class BasicsDeploy extends Controller
             $BasicBtApiSerice = new BasicBtApiSerice('http://'.$v['server_ip'].':'.$v['bt_api']['port'],$v['bt_api']['key']);
             $btData = [
                 'webname'=>json_encode(["domain"=>reset($data['domain']),"domainlist"=>$data['domain'],"count"=>0]),#  网站域名 json格式
-                'path'=>'/www/wwwroot/'.$Interspace['code'].$data['code'],# 网站路径
+                'path'=>'/www/wwwroot/'.$Interspace['code'].'_'.$data['code'],# 网站路径
                 'type_id'=>0,# 网站分类ID
                 'type'=>'PHP',# 网站类型
                 'version'=>'73',# PHP版本
