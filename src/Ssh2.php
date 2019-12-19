@@ -209,10 +209,10 @@ class Ssh2
         {
             if (is_array($value) && !empty($value)){
                 $jointShell .= $value[0].'  &&  ';
-                $time += $value[1]??10;
+                $time += ((int)$value[1])??50;
             }else{
                 $jointShell .= $value.'  &&  ';
-                $time += 10;
+                $time += 50;
             }
         }
         $jointShell = rtrim($jointShell,'  &&  ');
@@ -252,7 +252,6 @@ class Ssh2
         foreach ($this->directFgetsXterm($this->SSHconnect,$targetRes['jointShell'],$targetRes['time']) as $targetValue){
             $this->WSobject->sendUser($this->WSuserId,['msg'=>'数据接收中','content'=>$targetValue??'----','type'=>$type]);
         }
-        usleep(10000);
     }
 
     /**
