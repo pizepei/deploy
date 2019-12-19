@@ -733,6 +733,9 @@ class DeployService
         $Shell[] = 'cd '.$gitInfo['buildPath'].$gitInfo['name'];
         $Shell[] = 'pwd ';
         $this->SSHobject->WSdirectFgetsXterm($Shell);
+
+        $Shell = [];
+
         # 针对性的进行 不同项目的简单构建
         $this->TargetedTask($gitInfo['sha'],$gitInfo['type']);
         # 写入配置文件

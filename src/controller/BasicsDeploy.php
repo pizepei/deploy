@@ -818,8 +818,6 @@ class BasicsDeploy extends Controller
         if (!$ServerData) $this->error('主机分组中没有服务器');
         $BasicBtApiSerice = new BasicBtApiSerice();
 
-//        return $this->succeed($BasicBtApiSerice->batchInit($data['host_group']));
-
         foreach ($ServerData as $v)
         {
             # 创建网站AddSite  https://www.bt.cn/api-doc.pdf
