@@ -21,6 +21,7 @@ use pizepei\deploy\model\system\DeployBuildLogModel;
 use pizepei\deploy\model\system\DeploySystemDbConfigModel;
 use pizepei\deploy\model\system\DeploySystemModel;
 use pizepei\deploy\model\interspace\DeployInterspaceModel;
+use pizepei\deploy\model\system\DeploySystemModuleConfigModel;
 use pizepei\deploy\service\BasicBtApiSerice;
 use pizepei\deploy\service\BasicDeploySerice;
 use pizepei\deploy\service\BasicsGitlabService;
@@ -946,11 +947,13 @@ class BasicsDeploy extends Controller
      *      path [object] 路径参数
      *           id [int] 项目id
      *           ref [string] 分支，标记或提交的名称
+     *           interspaceId [uuid] 空间id
+     *           systemId [uuid] 系统id
      * @return array [json]
      *      data [raw]
-     * @title  部署时获取存储库文件内容
+     * @title  部署时获取存储库文件内容（配置）
      * @explain 部署时获取存储库文件内容
-     * @router get projects/:id[int]/config/files/:ref[string]
+     * @router get projects/:id[int]/config/files/:ref[string]/:interspaceId[uuid]/:systemId[uuid]
      * @throws \Exception
      */
     public function projectsRepositoryFiles(Request $Request)
@@ -963,17 +966,21 @@ class BasicsDeploy extends Controller
 
         # content
         if ($composerFiles){
+            # PHP 项目
             $data['msg'] = '获取PHP项目配置成功';
             $data['type'] = 'php';
-            $data['content']['buildConfig'] = base64_decode($composerFiles['list']['content']);
+            $data['content']['buildConfigText'] = base64_decode($composerFiles['list']['content']);
             # Deploy.php配置信息
-            $Deploy = app()->InitializeConfig()->get_const('\Deploy');
-            $data['content']['deployonfig'] = app()->InitializeConfig()->setConfigString('Deploy',$Deploy,'','Deploy');
+            $DeployConfig = (new DeployService())->setDeployConfig($Request->path('interspaceId'),$Request->path('systemId'),$Request->path('id'));
+            $data['content']['deployConfigArray']   = $DeployConfig['deployConfigArray'];
+            $data['content']['deployConfigText']    = $DeployConfig['deployConfigText'];
             $this->succeed($data,'获取PHP项目配置成功');
+
         }else if ($packageFiles){
+            # 前端项目
             $data['msg'] = '获取前端项目配置成功';
             $data['type'] = 'html';
-            $data['content']['buildConfig'] = base64_decode($packageFiles['list']['content']);
+            $data['content']['buildConfigText'] = base64_decode($packageFiles['list']['content']);
             $data['content']['deployonfig'] = '';
             $this->succeed($data,'获取前端项目配置成功');
         }else{
@@ -1074,7 +1081,7 @@ class BasicsDeploy extends Controller
      *          name [string] 构建名称
      *          remark [string] 构建备注
      *          buildConfig [string] 构建配置如composer.json内容
-     *          deployonfig [string]部署配置
+     *          deployConfig [string]部署配置
      * @return array [json]
      *    data [raw]
      * @throws \Exception
@@ -1125,6 +1132,8 @@ class BasicsDeploy extends Controller
         return $this->succeed($DeployService->deployBuildSocketInit($data['buildServer'],$data['ServerData'],$data['deployBuilGitInfo'],$data['UserInfoId'],$data['deployData']));
     }
 
+    #####################系统级别的数据库配置####################################
+
     /**
      * @Author pizepei
      * @Created 2019/8/25 22:40
@@ -1136,7 +1145,7 @@ class BasicsDeploy extends Controller
      * @throws \Exception
      * @return array [json]
      *      data [raw]
-     * @router get system/:id[uuid]/db/config-List
+     * @router get system/:id[uuid]/db/config-list
      */
     public function deploySystemDbConfigList(Request $Request)
     {
@@ -1149,10 +1158,202 @@ class BasicsDeploy extends Controller
         $DbConfig = DeploySystemDbConfigModel::table()
             ->where(['system_id'])
             ->fetchAll();
-        $this->succeed($DbConfig);
+        $this->succeed(['list'=>$DbConfig]);
     }
 
+    /**
+     * @Author pizepei
+     * @Created 2019/8/25 22:40
+     * @param \pizepei\staging\Request $Request
+     *      path [object]
+     *          id [uuid] 系统id
+     *      post [object]
+     *          title [string] 数据库标题
+     *          remark [string] 备注
+     *          versions [string] 数据库版本
+     *          type [string] 数据库类型
+     *          hostname [string] 数据库地址
+     *          database [string] 数据库名
+     *          username [string] 数据库用户名
+     *          password [string] 数据库密码
+     *          hostport [int] 数据库连接端口
+     *          charset [string] 数据库连接编码默认
+     *          status [int] 状态
+     * @title  系统下添加数据库配置
+     * @explain 系统下添加数据库配置列表（只允许管理员配置）
+     * @throws \Exception
+     * @return array [json]
+     *      data [raw]
+     * @router post system/:id[uuid]/db/config
+     */
+    public function addDeploySystemDbConfigList(Request $Request)
+    {
+        $System = DeploySystemModel::table()->get($Request->path('id'));
+        if (!$System) $this->error('系统不存在');
+        # 查询空间信息
+        $Interspace = DeployInterspaceModel::table()->where(['id'=>$System['interspace_id'],'owner'=>$this->UserInfo['id']])->fetch();
+        if (!$Interspace) $this->error('只有空间管理员才有权限');
+        # 拼接数据    数据库  数据库类型   数据库  数据库账号  数据库密码   数据库名 数据库字符集
+        if (!in_array($Request->post('type'),['mysql','sqlsrv','pgsql']))$this->error('数据库类型错误');
+        $data = [
+            'system_id'     =>$Request->path('id'),
+            'title'         =>$Request->post('title'),
+            'remark'        =>$Request->post('remark'),
+            'type'          =>$Request->post('type'),
+            'status'        =>$Request->post('status'),
+            'dbtabase'      =>$Request->post(),
+        ];
+        $DbConfig = DeploySystemDbConfigModel::table()
+            ->add($data);
+        $this->succeed($DbConfig,'添加成功');
+    }
 
+    /**
+     * @Author pizepei
+     * @Created 2019/8/25 22:40
+     * @param \pizepei\staging\Request $Request
+     *      path [object]
+     *          id [uuid] 系统id
+     *          cid [uuid] 配置id
+     *      raw [object]
+     *          title [string] 数据库标题
+     *          remark [string] 备注
+     *          versions [string] 数据库版本
+     *          type [string] 数据库类型
+     *          hostname [string] 数据库地址
+     *          database [string] 数据库名
+     *          username [string] 数据库用户名
+     *          password [string] 数据库密码
+     *          hostport [int] 数据库连接端口
+     *          charset [string] 数据库连接编码默认
+     *          status [int] 状态
+     * @title  修改系统下数据库配置
+     * @explain 修改系统下数据库配置列表（只允许管理员配置）
+     * @throws \Exception
+     * @return array [json]
+     *      data [raw]
+     * @router put system/:id[uuid]/db/config/:cid[uuid]
+     */
+    public function updateDeploySystemDbConfigList(Request $Request)
+    {
+        $System = DeploySystemModel::table()->get($Request->path('id'));
+        if (!$System) $this->error('系统不存在');
+        # 查询空间信息
+        $Interspace = DeployInterspaceModel::table()->where(['id'=>$System['interspace_id'],'owner'=>$this->UserInfo['id']])->fetch();
+        if (!$Interspace) $this->error('只有空间管理员才有权限');
+        $DbConfig = DeploySystemDbConfigModel::table()->get($Request->path('cid'));
+        if (!$DbConfig) $this->error('配置不存在');
+        # 拼接数据    数据库  数据库类型   数据库  数据库账号  数据库密码   数据库名 数据库字符集
+        if (!in_array($Request->raw('type'),['mysql','sqlsrv','pgsql']))$this->error('数据库类型错误');
+        $data = [
+            'title'         =>$Request->raw('title'),
+            'remark'        =>$Request->raw('remark'),
+            'status'        =>$Request->raw('status'),
+            'dbtabase'      =>$Request->raw(),
+        ];
+        $DbConfig = DeploySystemDbConfigModel::table()
+            ->where(['system_id'=>$Request->path('id'),'id'=>$Request->path('cid')])
+            ->update($data);
+        $this->succeed($DbConfig,'操作成功');
+    }
+    /**
+     * @Author pizepei
+     * @Created 2019/8/25 22:40
+     * @param \pizepei\staging\Request $Request
+     *      path [object]
+     *          id [uuid] 系统id
+     *          mid [int] 模块id（gitid）
+     * @title  系统下添加数据库配置
+     * @explain 系统下添加数据库配置列表（只允许管理员配置）
+     * @throws \Exception
+     * @return array [json]
+     *      data [raw]
+     * @router get system/:id[uuid]/module/:mid[int]/config
+     */
+    public function getSystemModuleConfig(Request $Request)
+    {
 
+        $System = DeploySystemModel::table()->get($Request->path('id'));
+        if (!$System) $this->error('系统不存在');
+        # 查询空间信息
+        $Interspace = DeployInterspaceModel::table()->where(['id'=>$System['interspace_id'],'owner'=>$this->UserInfo['id']])->fetch();
+        if (!$Interspace) $this->error('只有空间管理员才有权限');
+        $DbConfig = DeploySystemDbConfigModel::table()
+            ->where(['system_id'=>$Request->path('id')])
+            ->fetchAll();
 
+        $data = DeploySystemModuleConfigModel::table()->where([
+            'gitlab_id'=>$Request->path('mid'),
+            'system_id'=>$Request->path('id'),
+        ])->fetch();
+        if (!$data){
+            # 有配置
+            $data = [
+                'id'            =>'',
+                'gitlab_id'     =>$Request->path('mid'),
+                'system_id'     =>$Request->path('id'),
+                'name'          =>'',
+                'remark'        =>'',
+                'deploy'        =>[],
+                'domain'        =>'',
+                'run_pattern'   =>'ORIGINAL',
+                'db_config_id'  =>Model::UUID_ZERO,
+                'error_or_log'  =>[],
+                'config'        =>[],
+                'extend'        =>[],
+                'status'        =>3,
+            ];
+        }
+        $data['DbConfigList'] = $DbConfig;
+        # 读取数据库列表
+        $this->succeed($data);
+    }
+
+    /**
+     * @Author pizepei
+     * @Created 2019/8/25 22:40
+     * @param \pizepei\staging\Request $Request
+     *      path [object]
+     *          id [uuid] 系统id
+     *          mid [int] 模块id（gitid）
+     *      raw [object]
+     *          deploy [object] 部署配置
+     *              MODULE_PREFIX [string] 项目路由前缀
+     *              toLoadConfig [string] 配置方式
+     *              VIEW_RESOURCE_PREFIX [string] 使用的路由前端资源前缀
+     *              SERVICE_PATTERN [raw]
+     *          db_config_id [uuid] 数据库配置id
+     * @title  系统服务模块配置
+     * @explain 系统服务模块配置（只允许管理员配置）
+     * @throws \Exception
+     * @return array [json]
+     *      data [raw]
+     * @router put system/:id[uuid]/module/:mid[int]/config
+     */
+    public function updateSystemModuleConfig(Request $Request)
+    {
+        $System = DeploySystemModel::table()->get($Request->path('id'));
+        if (!$System) $this->error('系统不存在');
+        # 查询空间信息
+        $Interspace = DeployInterspaceModel::table()->where(['id'=>$System['interspace_id'],'owner'=>$this->UserInfo['id']])->fetch();
+        if (!$Interspace) $this->error('只有空间管理员才有权限');
+        $DbConfig = DeploySystemDbConfigModel::table()
+            ->where(['system_id'=>$Request->path('id'),'id'=>$Request->raw('db_config_id')])
+            ->fetchAll();
+        if (!$DbConfig) $this->error('数据库配置不存在');
+        $res = DeploySystemModuleConfigModel::table()->where([
+            'gitlab_id'=>$Request->path('mid'),
+            'system_id'=>$Request->path('id'),
+        ])->fetch();
+        if (!$res){
+            $data = $Request->raw();
+            # 有配置
+            $data['gitlab_id']  =   $Request->path('mid');
+            $data['system_id']  =   $Request->path('id');
+        }else{
+            $data = $Request->raw();
+            $data['id'] = $res['id'];
+        }
+        $this->succeed(DeploySystemModuleConfigModel::table()->insert($data),'操作成功');
+    }
 }

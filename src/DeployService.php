@@ -12,6 +12,7 @@ namespace pizepei\deploy;
 use pizepei\deploy\model\interspace\DeployInterspaceModel;
 use pizepei\deploy\model\system\DeployBuildLogModel;
 use pizepei\deploy\model\system\DeploySystemModel;
+use pizepei\deploy\model\system\DeploySystemModuleConfigModel;
 use pizepei\deploy\service\BasicBtApiSerice;
 use pizepei\deploy\service\BasicsGitlabService;
 use pizepei\model\cache\Cache;
@@ -521,9 +522,8 @@ class DeployService
         $ServerDataS['list'] =$ServerData;
         $ServerDataS['id'] = $System['host_group'];
         # Deploy.php配置信息
-        $Deploy = app()->InitializeConfig()->get_const('\Deploy');
-        $deployData['deployConfigArray'] = $Deploy;
-        $deployData['deployConfigText'] = app()->InitializeConfig()->setConfigString('Deploy',$Deploy,'','Deploy');
+        $deployData['deployConfigText'] = $Request->post('deployConfig');
+        $deployData['buildConfigText'] = $Request->post('buildConfig');
         return ['buildServer'=>\Deploy::buildServer,'ServerData'=>$ServerDataS,'deployBuilGitInfo'=>$deployBuilGitInfo,'UserInfoId'=>$UserInfo['id'],'deployData'=>$deployData];
     }
 
@@ -587,6 +587,28 @@ class DeployService
         $this->SSHobject->WSdirectFgetsXterm(['php -v']);
     }
 
+    public function setDeployConfig($interspaceId,$systemId,$project_id)
+    {
+        # appid  就是系统id  =》一个系统下解密参数 （系统内共同使用)
+        $DeploySystem = DeploySystemModel::table()->get($systemId);
+        if(empty($DeploySystem)){
+            error('系统不存在');
+        }
+        # 获取服务模块配置信息
+        $DeploySystemModuleConfig = DeploySystemModuleConfigModel::table()
+            ->where(['gitlab_id'=>$project_id,'system_id'=>$systemId])
+            ->fetch();
+        if (!$DeploySystemModuleConfig)error('该服务模块没有进行配置！');
+        # Deploy.php配置信息
+        $DeployData = app()->InitializeConfig()->get_const('\pizepei\config\Deploy');
+        $DeploySystem['deploy']['INITIALIZE']['appid'] = $systemId; # 系统id就是appid
+        $DeploySystem['deploy']['__EXPLOIT__'] = 1; # 调试模式
+        $DeploySystem['deploy']['PROJECT_ID'] = $project_id; # 项目ID
+        $DeployData = array_merge($DeployData,$DeploySystem['deploy']);
+        $data['deployConfigArray'] = $DeployData;
+        $data['deployConfigText'] = app()->InitializeConfig()->setConfigString('Deploy',$DeployData,'','Deploy');
+        return $data;
+    }
 
     /**
      * @Author 皮泽培
@@ -741,7 +763,7 @@ class DeployService
         # 写入配置文件
         if ($gitInfo['type'] === 'php'){
             $Shell[] = 'echo PHP项目进行：写入Deploy.php';
-            $Shell[] = ['echo '."'".$deployData['deployConfigText']."' > ./config/Deploy.php",110];
+            $Shell[] = ['echo '.'"'.$deployData['deployConfigText'].'" > ./config/Deploy.php',110];
         }else if ($gitInfo['type'] === 'html'){
             # 修改引入目录
         }
@@ -820,7 +842,7 @@ class DeployService
             'gitlab_id'         =>$gitInfo['gitlab_id'],
             'system_id'         =>$deployData['system']['id'],
             'sha'               =>$gitInfo['sha'],
-            'date'              =>$gitInfo['date'],
+            'build_date'        =>$gitInfo['date'],
             'branch'            =>$gitInfo['branch'],
             'ssh_url_to_repo'   =>$gitInfo['ssh_url_to_repo'],
             'build_path'        =>$gitInfo['buildPath'],
@@ -830,7 +852,7 @@ class DeployService
             'build_server'      =>$BuildServerSsh,
             'server_group'      =>$serverGroup,
             'account_id'        =>$userId,
-            'deploy_data_array'  =>$deployData['deployConfigArray'],
+            'deploy_data_array'  =>$deployData['deployConfigArray']??[],
             'deploy_data_text'  =>$deployData['deployConfigText'],
             'build_config'      =>['COMMENT'=>'构建配置如composer配置',],
             'status'=>3,
@@ -863,13 +885,13 @@ class DeployService
         # 初始化 ssh
         $this->SSHobject->wsInit($this->WSClient,$this->WSuserId);
         $this->SSHobject->WSdirectFgetsXterm($this->getIpSSH);
-//        $this->addDeployBuildLog( $BuildServerSsh, $serverGroup, $gitInfo, $userId, $deployData);
+        $this->addDeployBuildLog( $BuildServerSsh, $serverGroup, $gitInfo, $userId, $deployData);
         echo Helper()->json_encode(['code'=>200,"msg"=>'开始构建'.$gitInfo['name'].'['.$gitInfo['type'].'] 项目','data'=>['xtermSon'=>$xtermSon??'']]);
 
         $this->sendBuildDeployFlow('<font color="red">开始构建'.$gitInfo['name'].'['.$gitInfo['type'].']项目</font>');
+        fastcgi_finish_request();
         # 在连接宿主机 parasitifer 上进行构建并传输到目标服务器
         $this->parasitiferDeployBuildSocket($serverGroup, $gitInfo,$deployData);
-        fastcgi_finish_request();
 
         # 分别进入目标服务器 解压代码到对应的www 临时目录 设置代码文件权限为www
         $this->sendBuildDeployFlow('批量进入目标主机解压项目到对应目录并设置软连接和目录权限');
@@ -896,7 +918,6 @@ class DeployService
     # 处理结果
     public function resultOfHandling()
     {
-
         $this->sendBuildDeployFlow('执行结束!');
         $this->sendUser(PHP_EOL.'--------------'.date('Y-m-d H:i:s').'---------------');
         $this->sendUser(PHP_EOL.'---------------构建执行完成--------------','构建执行完成','PerformTheEnd');
