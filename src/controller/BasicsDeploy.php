@@ -805,7 +805,7 @@ class BasicsDeploy extends Controller
             'INITIALIZE'=>[
                 'token'         =>Helper()->str()->str_rand(32),
                 'appSecret'     =>Helper()->str()->str_rand(37),
-                'configCenter'  =>'http://config.heil.top/deploy/v2/',//配置中心地址
+                'configCenter'  =>'http://oauth.heil.top/deploy/v2/',//配置中心地址
             ],
         ];
         # 通过主机分组 获取bt信息 创建网站
