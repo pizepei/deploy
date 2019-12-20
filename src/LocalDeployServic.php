@@ -69,7 +69,10 @@ class LocalDeployServic
             throw new \Exception('初始化配置失败：请求配置中心失败',10004);
         }
         if (Helper::init()->is_empty($rws,'body')){
-            throw new \Exception('初始化配置失败：请求配置中心成功就行body失败',10005);
+            if (app()->__EXPLOIT__){
+                error('初始化配置失败：请求配置中心成功就行body失败',10005,$rws);
+            }
+            error('初始化配置失败：请求配置中心成功就行body失败',10005);
         }
         $body =  Helper::init()->json_decode($rws['body']);
         if (Helper::init()->is_empty($body,'data')){
