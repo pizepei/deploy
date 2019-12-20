@@ -64,19 +64,16 @@ class LocalDeployServic
             'encrypt_msg'       =>$encrypt_msg,
         ];
 
-        $rws  = Helper::init()->httpRequest(\Deploy::INITIALIZE['configCenter'].'service-config/'.\Deploy::INITIALIZE['appid'],Helper::init()->json_encode($postData));
+        $rws  = Helper::init()->httpRequest(\Deploy::INITIALIZE['configCenter'].'service-config/'.\Deploy::INITIALIZE['appid'].'.json',Helper::init()->json_encode($postData));
         if ($rws['RequestInfo']['http_code'] !== 200){
             throw new \Exception('初始化配置失败：请求配置中心失败',10004);
         }
         if (Helper::init()->is_empty($rws,'body')){
-            if (app()->__EXPLOIT__){
-                error('初始化配置失败：请求配置中心成功就行body失败',10005,$rws);
-            }
-            error('初始化配置失败：请求配置中心成功就行body失败',10005);
+            throw new \Exception('初始化配置失败：请求配置中心成功就行body失败',10005);
         }
         $body =  Helper::init()->json_decode($rws['body']);
         if (Helper::init()->is_empty($body,'data')){
-            throw new \Exception('初始化配置失败：请求配置中心成功就行body失败',10005);
+            throw new \Exception($body['msg'],10005);
         }
         if ($body['code'] !==200){
             throw new \Exception('初始化配置失败：'.$body['msg'],10005);

@@ -713,7 +713,9 @@ class DeployService
             $Shell[] = 'echo 切换到对应的sha ：'.$action;
             $Shell[] = 'git  checkout '.$action;
             if ($type ==='php'){
-                $Shell[] = ['composer install  --no-dev',1200];
+                $Shell[] = ['composer update',1200];
+
+//                $Shell[] = ['composer install  --no-dev',1200];
             }else{
                 $Shell[] = 'echo 前端项目进行构建';
 //                $Shell[] = 'npm install';
