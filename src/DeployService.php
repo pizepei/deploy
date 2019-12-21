@@ -601,6 +601,8 @@ class DeployService
         if (!$DeploySystemModuleConfig)error('该服务模块没有进行配置！');
         # Deploy.php配置信息
         $DeployData = app()->InitializeConfig()->get_const('\pizepei\config\Deploy');
+        $DeploySystem['deploy']['INTERSPACE_ID'] = $interspaceId; # 空间id
+        $DeploySystem['deploy']['INITIALIZE']['interspaceId'] = $interspaceId; # 空间id
         $DeploySystem['deploy']['INITIALIZE']['appid'] = $systemId; # 系统id就是appid
         $DeploySystem['deploy']['__EXPLOIT__'] = 1; # 调试模式
         $DeploySystem['deploy']['PROJECT_ID'] = $project_id; # 项目ID
@@ -824,7 +826,7 @@ class DeployService
             # 设置软连接  ln -snf /deploy/wwwroot/CF3D18_97346/2019_12_17_17_26_43/layuiAdmin  /www/wwwroot/
             $this->SSHobject->WSdirectFgetsXterm('ln -snf '.$valueIn['runPath'].$gitInfo['name'].' '.$valueIn['wwwrootPath']);# 设置软连接
             $this->SSHobject->WSdirectFgetsXterm('cd '.$valueIn['wwwrootPath']); # 进入运行目录
-            $this->SSHobject->WSdirectFgetsXterm('chown -R www:www '.$valueIn['wwwrootPath']); # 设置运行目录的权限
+            $this->SSHobject->WSdirectFgetsXterm('chown -R www:www '.$valueIn['wwwrootPath'].'/'.$gitInfo['name'].'/'); # 设置运行目录的权限
             $this->SSHobject->WSdirectFgetsXterm('pwd && ll');
             $this->sendUser('echo ************完成主机：'.$valueIn['name'].'['.$valueIn['host'].']构建***************');
             $this->sendUser('************从主机：'.$valueIn['name'].'['.$valueIn['host'].']中退出***************');

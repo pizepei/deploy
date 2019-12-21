@@ -348,6 +348,12 @@ class BasicsDeploy extends Controller
      * @param \pizepei\staging\Request $Request
      *      path [object] 路径参数
      *          appid [string] 项目appid
+     *      raw [object] 路径参数
+     *          nonce [int required] 随机数
+     *          timestamp [string required]  时间戳
+     *          signature [string required] 签名
+     *          encrypt_msg [string required] 密文
+     *          domain [string required] 域名
      * @title  获取项目配置接口
      * @explain 获取项目配置接口（基础配置）。
      * @throws \Exception
@@ -362,7 +368,7 @@ class BasicsDeploy extends Controller
         # saas模式下是一个域名对应一个appid =配置
         # 传统模式下可以是多个域名对应一个appid=配置
         $LocalDeploy = new LocalDeployServic();
-        return $this->succeed($LocalDeploy->initConfigCenterV2(['domain'=>'www.qqjsq.top'],$Request->path('appid')));
+        return $this->succeed($LocalDeploy->initConfigCenterV2($Request->input('','raw'),$Request->path('appid')));
     }
 
 

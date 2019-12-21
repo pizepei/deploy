@@ -15,7 +15,9 @@ use GuzzleHttp\Client;
 use pizepei\deploy\model\DeployServerConfigModel;
 use pizepei\deploy\model\MicroServiceConfigCenterModel;
 use pizepei\deploy\model\system\DeployDomainModel;
+use pizepei\deploy\model\system\DeploySystemDbConfigModel;
 use pizepei\deploy\model\system\DeploySystemModel;
+use pizepei\deploy\model\system\DeploySystemModuleConfigModel;
 use pizepei\encryption\aes\Prpcrypt;
 use pizepei\encryption\SHA1;
 use pizepei\func\Func;
@@ -63,8 +65,11 @@ class LocalDeployServic
             'signature'         =>$signature,
             'encrypt_msg'       =>$encrypt_msg,
         ];
-
-        $rws  = Helper::init()->httpRequest(\Deploy::INITIALIZE['configCenter'].'service-config/'.\Deploy::INITIALIZE['appid'].'.json',Helper::init()->json_encode($postData));
+        if (\Deploy::INITIALIZE['versions']==='V2'){
+            $rws  = Helper::init()->httpRequest(\Deploy::INITIALIZE['configCenter'].'service-config/'.\Deploy::INITIALIZE['appid'].'.json',Helper::init()->json_encode($postData));
+        }else{
+            $rws  = Helper::init()->httpRequest(\Deploy::INITIALIZE['configCenter'].'service-config/'.\Deploy::INITIALIZE['appid'],Helper::init()->json_encode($postData));
+        }
         if ($rws['RequestInfo']['http_code'] !== 200){
             throw new \Exception('初始化配置失败：请求配置中心失败',10004);
         }
@@ -293,25 +298,38 @@ class LocalDeployServic
             error('初始化配置失败：appid or domain 不匹配',10010);
         }
         # 通过域名+系统id
-
-
+        # 查询配置  数据库配置
+        $ModuleConfig = DeploySystemModuleConfigModel::table()
+            ->where([
+                'gitlab_id'=>$result['MODULE_PREFIX'],
+                'system_id'=>$result['appid'],
+            ])
+            ->fetch();
+        if (!$ModuleConfig) error('服务不存在！！');
         # 验证通过根据请求返回数据Config.php  Dbtabase.php  ErrorOrLogConfig.php
         switch($result['ProcurementType']) {
             case 'Config':
-                $config = $DeploySystem['config'];
+                $configTpl = app()->InitializeConfig()->get_const('\Config');
+                $config = $configTpl;
                 break;
             case 'Dbtabase':
-                $config = $DeploySystem['dbtabase'];
+                # 获取数据库配置  然后合并
+                $systemDbConfig = DeploySystemDbConfigModel::table()->get($ModuleConfig['db_config_id']);
+                $DbtabaseTpl = app()->InitializeConfig()->get_const('\pizepei\config\Dbtabase');
+                $config = $DbtabaseTpl;
+                $DBTABASE = array_merge($DbtabaseTpl['DBTABASE'],$systemDbConfig['dbtabase']);
+                $config['DBTABASE'] = $DBTABASE;
                 break;
             case 'ErrorOrLogConfig':
-                $config = $DeploySystem['error_or_log'];
+                $ErrorOrLogTpl = app()->InitializeConfig()->get_const('\pizepei\config\ErrorOrLogConfig');
+                $config = $ErrorOrLogTpl;
                 break;
             default:
                 // 不满足所有条件执行的代码块
                 break;
         }
+//        error($ModuleConfig['run_pattern'],10009);
 
-        return $server_ip;
         /**
          * 加密
          * 获取对应的配置信息（带上获取配置的时间和配置中心信息，用来防止重复请求或者错误排查）
