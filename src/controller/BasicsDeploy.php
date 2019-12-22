@@ -62,39 +62,7 @@ class BasicsDeploy extends Controller
      */
     public function spidersWeb(Request $Request)
     {
-        $res = \Helper()->httpRequest(
-            'https://wap.91160.com/doctor/oldschedule.html?unit_id=100&dep_id=200006123&doctor_id=21517&cid=16',
-            '',
-            [
-//            'header'=>[
-//                'accept: application/json, text/plain, */*',
-//                'accept-encoding: gzip, deflate, br',
-//                'accept-language: zh-CN,zh;q=0.9,en;q=0.8',
-//                'cache-control: no-cache',
-                'cookie: __jsluid_s=83e6b0a2c06a7c78d3d8cbd1913b787f; Hm_lvt_2e7d40bfa5ae51733e63c04f3d028dd1=1576655795; channel_id_v2=MTY=; location_city_id_v2=NQ==; client_uid_v2=LQmQiIq16DVOVnWn%2FxqY7dcCJT3DjmOqnp%2B%2Bzp6uTie4fL6hLHe9jZjHxIvhkv4m; _ga=GA1.2.31862618.1576655813; _gid=GA1.2.741524040.1576655813; isLogined_v2=MQ==; _reg_phone__v2=wFmoGqgi0GJiKMJSRkEkdw%3D%3D; SHADOWMAN_v2=eyJrZXkiOiIzYzkyMTJjMGZjZjZmM2EzMTJjYzBlNDIxZmQ5ZDhmNCIsInZhbCI6ImM5MWYzZDlmNGFhZWU0ZDRlYmRkZTg1OGJkODIyOTlhIiwidG0iOjE1NzY2NTYwNzF9; last_login_v2=MTgwMjg3NTAzOTU=; Hm_lpvt_2e7d40bfa5ae51733e63c04f3d028dd1=1576716903; Hm_lpvt_d4fe452b4b4d3072dfda2f68e7a19668_v2=2VwdbV7SFYzKz4ntpTWnDw%3D%3D; Hm_lvt_d4fe452b4b4d3072dfda2f68e7a19668_v2=2VwdbV7SFYzKz4ntpTWnDw%3D%3D',
-                'pragma: no-cache',
-                'referer: https://wap.91160.com/vue/doctor/detail.html?type=guahao&unit_id=100&dep_id=200006123&doc_id=21517',
-                'sec-fetch-mode: cors',
-                'sec-fetch-site: same-origin',
-                'user-agent: Mozilla/5.0 (Linux; Android 4.4.2; Nexus 4 Build/KOT49H) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Mobile Safari/537.36',
-                'x-requested-with: XMLHttpRequest',
-//            ],
-//                'header'=>[
-////                    'Accept: */*',
-////                    'Accept-Encoding: gzip, deflate',
-////                    'Accept-Language: zh-CN',
-////                    'Cache-Control: no-cache',
-////                    'Connection: keep-alive',
-////                    'Content-type: application/x-www-form-urlencoded',
-//                    'Cookie: UM_distinctid=16e8b9e9a7a1fa-0a6c7403c609d5-2393f61-1fa400-16e8b9e9a7b1b0; cs_t=12f17ac6675dfad8d3d4346318992686cf325e38d65dfad8d3d4374418560101',
-//                    'Host: beenest.try.csmall.com',
-//                    'Pragma: no-cache',
-////                    'Referer: http://beenest.try.csmall.com/application/system/building/15/test',
-//                    'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36',
-//                ],
 
-//            'cookie'=>'__jsluid_s=83e6b0a2c06a7c78d3d8cbd1913b787f; Hm_lvt_2e7d40bfa5ae51733e63c04f3d028dd1=1576655795; channel_id_v2=MTY=; location_city_id_v2=NQ==; client_uid_v2=LQmQiIq16DVOVnWn%2FxqY7dcCJT3DjmOqnp%2B%2Bzp6uTie4fL6hLHe9jZjHxIvhkv4m; _ga=GA1.2.31862618.1576655813; _gid=GA1.2.741524040.1576655813; isLogined_v2=MQ==; _reg_phone__v2=wFmoGqgi0GJiKMJSRkEkdw%3D%3D; SHADOWMAN_v2=eyJrZXkiOiIzYzkyMTJjMGZjZjZmM2EzMTJjYzBlNDIxZmQ5ZDhmNCIsInZhbCI6ImM5MWYzZDlmNGFhZWU0ZDRlYmRkZTg1OGJkODIyOTlhIiwidG0iOjE1NzY2NTYwNzF9; last_login_v2=MTgwMjg3NTAzOTU=; Hm_lpvt_2e7d40bfa5ae51733e63c04f3d028dd1=1576716903; Hm_lpvt_d4fe452b4b4d3072dfda2f68e7a19668_v2=dYIo8esER7mm7zfNeNsrew%3D%3D; Hm_lvt_d4fe452b4b4d3072dfda2f68e7a19668_v2=dYIo8esER7mm7zfNeNsrew%3D%3D',
-        ]);
         $this->succeed($res['body']);
     }
 
@@ -290,25 +258,30 @@ class BasicsDeploy extends Controller
     public function test(Request $Request)
     {
 
-        $api = new BasicBtApiSerice('','');
-//        $BasicBtApiSerice = new BasicBtApiSerice('http://'.$v['server_ip'].':'.$v['bt_api']['port'],$v['bt_api']['key']);
-        $res= $api->AddSite([
-            'webname'=>json_encode(["domain"=>"1w1.hao.com","domainlist"=>['sss.ccccc','1ssw1.hao.com'],"count"=>0]),#  网站域名 json格式
-            'path'=>'/www/wwwroot/w12.hao.com',# 网站路径
-            'type_id'=>0,# 网站分类ID
-            'type'=>'PHP',# 网站类型
-            'version'=>'73',# PHP版本
-            'port'=>80, # 网站端口
-            'ps'=>'sssss', # 网站备注
-            'ftp'=>false,
-            'sql'=>false
-        ]);
-        $this->succeed($res);
-//        $Deploy = $this->app->InitializeConfig()->get_const('\Deploy');
-//
-//        $str = $this->app->InitializeConfig()->setConfigString('Deploy',$Deploy,'','Deploy');
-//        echo $str;
-//        $this->succeed($str);
+        $json =  file_get_contents('../composer.json');
+
+        $array = json_decode($json,true);
+        echo  json_encode($array,JSON_PRETTY_PRINT );
+//        $this->succeed($array);
+//        $api = new BasicBtApiSerice('','');
+////        $BasicBtApiSerice = new BasicBtApiSerice('http://'.$v['server_ip'].':'.$v['bt_api']['port'],$v['bt_api']['key']);
+//        $res= $api->AddSite([
+//            'webname'=>json_encode(["domain"=>"1w1.hao.com","domainlist"=>['sss.ccccc','1ssw1.hao.com'],"count"=>0]),#  网站域名 json格式
+//            'path'=>'/www/wwwroot/w12.hao.com',# 网站路径
+//            'type_id'=>0,# 网站分类ID
+//            'type'=>'PHP',# 网站类型
+//            'version'=>'73',# PHP版本
+//            'port'=>80, # 网站端口
+//            'ps'=>'sssss', # 网站备注
+//            'ftp'=>false,
+//            'sql'=>false
+//        ]);
+//        $this->succeed($res);
+////        $Deploy = $this->app->InitializeConfig()->get_const('\Deploy');
+////
+////        $str = $this->app->InitializeConfig()->setConfigString('Deploy',$Deploy,'','Deploy');
+////        echo $str;
+////        $this->succeed($str);
 
     }
 
@@ -813,6 +786,15 @@ class BasicsDeploy extends Controller
                 'appSecret'     =>Helper()->str()->str_rand(37),
                 'configCenter'  =>'http://oauth.heil.top/normative/deploy/v2/',//配置中心地址
             ],
+            'MicroService'=>[
+                'url' =>'http://oauth.heil.top/normative/basics/microservice/apps/config/',
+                'urlencode' => true,
+                'appid'=>'677FF87E-0415-F553-7A12-FDBFC15B3330',//服务appid
+                'appSecret'=>'5589ba719128973a008379c09e4c9975',//加密参数
+                'encodingAesKey'=>'6ba24ab0440ab70bcd40ab9caa9d4a94d06bb46d7da',//解密参数
+                'token'=>'0bd2d658402b00400da77b69bd0942bb',//签名使用
+            ],
+
         ];
         # 通过主机分组 获取bt信息 创建网站
         # 获取远程生产运行主机信息
@@ -944,7 +926,8 @@ class BasicsDeploy extends Controller
         }
         foreach ($System['service_module'] as &$value)
         {
-            $value['log'] = false;
+            # 获取部署详情
+            $value['log'] = DeployBuildLogModel::table()->where(['interspace_id'=>$System['interspace_id'],'system_id'=>$Request->path('id'),'gitlab_id'=>$value['id']])->fetchAll();
         }
         $this->succeed($System);
     }
