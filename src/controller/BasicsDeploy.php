@@ -777,8 +777,12 @@ class BasicsDeploy extends Controller
         }
         # 生成code
         $data['code'] = Helper()->str()->str_rand(6,'',true);
+        $data['config'] = app()->InitializeConfig()->get_const('\pizepei\config\Config');
+
+        $data['config']['ACCOUNT']['logon_token_salt'] = Helper()->str()->str_rand('50');
         # 部署信息
         $data['deploy'] =[
+            'CENTRE_ID'    =>0,//中心项目id  在项目内部或者部署时通过判断是否和当前项目id一致来确定是否是中心项目
             '__EXPLOIT__'=>1,//暂时设置为1
             'toLoadConfig'=>'ConfigCenter',
             'INITIALIZE'=>[
@@ -794,7 +798,6 @@ class BasicsDeploy extends Controller
                 'encodingAesKey'=>'6ba24ab0440ab70bcd40ab9caa9d4a94d06bb46d7da',//解密参数
                 'token'=>'0bd2d658402b00400da77b69bd0942bb',//签名使用
             ],
-
         ];
         # 通过主机分组 获取bt信息 创建网站
         # 获取远程生产运行主机信息
@@ -1345,4 +1348,50 @@ class BasicsDeploy extends Controller
         }
         $this->succeed(DeploySystemModuleConfigModel::table()->insert($data),'操作成功');
     }
+
+
+
+    /**
+     * @Author pizepei
+     * @Created 2019/8/25 22:40
+     * @param \pizepei\staging\Request $Request
+     *      path [object]
+     *          id [uuid] 系统id
+     *      raw [object]
+     *          deploy [object] 部署配置
+     *              CENTRE_ID [int]
+     *          config [object] 基础配置
+     *              ACCOUNT [raw]   账号配置
+     *              UNIVERSAL [raw] 基础配置
+     *              PRODUCT_INFO [raw] 网站消息
+     * @title  系统服务模块配置
+     * @explain 系统服务模块配置（只允许管理员配置）
+     * @throws \Exception
+     * @return array [json]
+     *      data [raw]
+     * @router put system/:id[uuid]/config-info
+     */
+    public function updateSystemConfig(Request $Request)
+    {
+        $System = DeploySystemModel::table()->get($Request->path('id'));
+        if (!$System) $this->error('系统不存在');
+        # 查询空间信息
+        $Interspace = DeployInterspaceModel::table()->where(['id'=>$System['interspace_id'],'owner'=>$this->UserInfo['id']])->fetch();
+        if (!$Interspace) $this->error('只有空间管理员才有权限');
+        $deploy = $Request->raw('deploy');
+        $config = $Request->raw('config');
+
+        # 确定主项目
+        if ($deploy['CENTRE_ID'] ===0) $this->error('主项目是必须的');
+        $System['deploy']['CENTRE_ID'] = $deploy['CENTRE_ID'];
+        $System['config']['ACCOUNT'] = Helper()->arrayList()->array_merge_deep($System['config']['ACCOUNT'],$config['ACCOUNT']);
+        $System['config']['UNIVERSAL'] = Helper()->arrayList()->array_merge_deep($System['config']['UNIVERSAL'],$config['UNIVERSAL']);
+        $System['config']['PRODUCT_INFO'] = Helper()->arrayList()->array_merge_deep($System['config']['PRODUCT_INFO'],$config['PRODUCT_INFO']);
+
+        $this->succeed(DeploySystemModel::table()->where(['id'=>$Request->path('id'),'interspace_id'=>$Interspace['id']])->update([
+            'deploy'=>$System['deploy'],
+            'config'=>$System['config'],
+        ]),'操作成功');
+    }
+
 }

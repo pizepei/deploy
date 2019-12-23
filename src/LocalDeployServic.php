@@ -65,7 +65,7 @@ class LocalDeployServic
             'signature'         =>$signature,
             'encrypt_msg'       =>$encrypt_msg,
         ];
-        if (\Deploy::INITIALIZE['versions']==='V2'){
+        if (isset(\Deploy::INITIALIZE['versions']) &&  \Deploy::INITIALIZE['versions']==='V2'){
             $rws  = Helper::init()->httpRequest(\Deploy::INITIALIZE['configCenter'].'service-config/'.\Deploy::INITIALIZE['appid'].'.json',Helper::init()->json_encode($postData));
         }else{
             $rws  = Helper::init()->httpRequest(\Deploy::INITIALIZE['configCenter'].'service-config/'.\Deploy::INITIALIZE['appid'],Helper::init()->json_encode($postData));
@@ -310,7 +310,7 @@ class LocalDeployServic
         switch($result['ProcurementType']) {
             case 'Config':
                 $configTpl = app()->InitializeConfig()->get_const('\Config');
-                $config = $configTpl;
+                $config = Helper()->arrayList()->array_merge_deep($configTpl,$DeploySystem['config']);
                 break;
             case 'Dbtabase':
                 # 获取数据库配置  然后合并
