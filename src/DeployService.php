@@ -546,12 +546,10 @@ class DeployService
             $Shell[] = 'git checkout -q '.$action.' &&  git reset --hard';
             if ($type ==='php'){
                 $Shell[] = ['composer update',1200];
-
-//                $Shell[] = ['composer install  --no-dev',1200];
             }else{
                 $Shell[] = 'echo 前端项目进行构建';
-//                $Shell[] = 'npm install';
-//                $Shell[] = ['gulp',100];
+                $Shell[] = 'npm install';
+                $Shell[] = ['gulp',200];
             }
         }
         # 发送流程
