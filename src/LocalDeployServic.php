@@ -10,7 +10,6 @@
 namespace pizepei\deploy;
 
 
-use config\app\BaseAuthGroup;
 use GuzzleHttp\Client;
 use pizepei\deploy\model\DeployServerConfigModel;
 use pizepei\deploy\model\MicroServiceConfigCenterModel;
@@ -478,7 +477,7 @@ class LocalDeployServic
             file_put_contents($controllerPath,$template);
         }
         # 写入权限文件$permissions
-        $App->InitializeConfig()->set_config('BaseAuthGroup',['DATA'=>$baseAuthGroup],$App->__DEPLOY_CONFIG_PATH__.DIRECTORY_SEPARATOR.$App->__APP__.DIRECTORY_SEPARATOR,'config\\'.$App->__APP__,'基础权限集合');
+        $App->InitializeConfig()->set_config('BaseAuthGroup',['DATA'=>$baseAuthGroup],$App->__DEPLOY_CONFIG_PATH__.DIRECTORY_SEPARATOR.$App->__APP__.DIRECTORY_SEPARATOR,'','基础权限集合');
 
     }
 
