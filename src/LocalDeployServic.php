@@ -315,7 +315,7 @@ class LocalDeployServic
             case 'Dbtabase':
                 # 获取数据库配置  然后合并
                 $systemDbConfig = DeploySystemDbConfigModel::table()->get($ModuleConfig['db_config_id']);
-                $systemDbConfig['dbtabase']['prefix'] = $DeploySystem['code'];
+                $systemDbConfig['dbtabase']['prefix'] = $DeploySystem['code'].'_';
                 $DbtabaseTpl = app()->InitializeConfig()->get_const('\pizepei\config\Dbtabase');
                 $config = $DbtabaseTpl;
                 $DBTABASE = Helper()->arrayList()->array_merge_deep($DbtabaseTpl['DBTABASE'],$systemDbConfig['dbtabase']);
