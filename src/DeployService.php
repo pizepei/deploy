@@ -538,8 +538,8 @@ class DeployService
                     $Shell[] = ['composer update',1200];
                 }else{
                 $Shell[] = 'echo 前端项目进行构建';
-//                    $Shell[] = 'npm install';
-//                    $Shell[] = ['gulp',100];
+                    $Shell[] = 'npm install';
+                    $Shell[] = ['gulp',200];
                 }
         }else{
             $Shell[] = 'echo 切换到对应的sha ：'.$action;
