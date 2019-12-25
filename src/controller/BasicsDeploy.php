@@ -1384,6 +1384,7 @@ class BasicsDeploy extends Controller
         # 确定主项目
         if ($deploy['CENTRE_ID'] ===0) $this->error('主项目是必须的');
         $System['deploy']['CENTRE_ID'] = $deploy['CENTRE_ID'];
+        $System['deploy']['CDN_URL'] = $deploy['CDN_URL'];
         $System['config']['ACCOUNT'] = Helper()->arrayList()->array_merge_deep($System['config']['ACCOUNT'],$config['ACCOUNT']);
         $System['config']['UNIVERSAL'] = Helper()->arrayList()->array_merge_deep($System['config']['UNIVERSAL'],$config['UNIVERSAL']);
         $System['config']['PRODUCT_INFO'] = Helper()->arrayList()->array_merge_deep($System['config']['PRODUCT_INFO'],$config['PRODUCT_INFO']);
