@@ -37,7 +37,7 @@ class GitlabMicroServiceDeployConfigModel extends Model
             'TYPE'=>'json', 'DEFAULT'=>false, 'COMMENT'=>'项目本身通过本配置向配置中心获取租客的配置（包括saas模式下的配置获取）',
         ],
         'retain_count'=>[
-            'TYPE'=>'int(3)', 'DEFAULT'=>'', 'COMMENT'=>'保留项目部署记录数量',
+            'TYPE'=>'int(3)', 'DEFAULT'=>0, 'COMMENT'=>'保留项目部署记录数量',
         ],
         'shell'=>[
             'TYPE'=>'json', 'DEFAULT'=>false, 'COMMENT'=>'部署时的额外shell',
