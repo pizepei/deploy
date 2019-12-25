@@ -115,15 +115,14 @@ class BasicsDeploy extends Controller
             if(!empty($password_hash)){
                 $this->error('密码hash错误');
             }
-            $Data['password_hash'] = $password_hash;
-
-            $AccountRes = AccountModel::table()->add(
-                $Data['number'] = 'Administrators_'.Helper::str()->int_rand($config['number_count']),//编号固定开头的账号编码(common,tourist,app,appAdmin,appSuperAdmin,Administrators)
-                $Data['phone'] = 18888888888,
-                $Data['email'] = '88888888@88.com',
-                $Data['type'] = 6,
-                $Data['logon_token_salt'] = Helper::str()->str_rand($config['user_logon_token_salt_count'])//建议user_logon_token_salt
-            );
+            $Data['password_hash']  = $password_hash;
+            $Data['number']         = 'Administrators_'.Helper::str()->int_rand($config['number_count']);//编号固定开头的账号编码(common,tourist,app,appAdmin,appSuperAdmin,Administrators)
+            $Data['phone']          = 18888888888;
+            $Data['email']          = '88888888@88.com';
+            $Data['type']           = 6;
+            $Data['nickname']       = '超级管理员';
+            $Data['logon_token_salt'] = Helper::str()->str_rand($config['user_logon_token_salt_count']);//建议user_logon_token_salt
+            $AccountRes = AccountModel::table()->add($Data);
             if (empty($AccountRes) || !is_array($AccountRes)){
                 $this->error('创建超级管理员失败');
             }
