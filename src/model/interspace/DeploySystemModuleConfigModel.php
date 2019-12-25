@@ -7,7 +7,7 @@
  * @explain 为了方便配置管理和系统下不同服务的配置可通用：规划为模块化配置由系统下关联选择
  */
 
-namespace pizepei\deploy\model;
+namespace pizepei\deploy\model\interspace;
 
 
 use pizepei\model\db\Model;

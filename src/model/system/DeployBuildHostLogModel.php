@@ -35,8 +35,7 @@ class DeployBuildHostLogModel extends Model
             'TYPE'=>"ENUM('1','2','3')", 'DEFAULT'=>'1', 'COMMENT'=>'1失败2、成功3、未知',
         ],
         'INDEX'=>[
-            ['TYPE'=>'UNIQUE','FIELD'=>'name,interspace_id','NAME'=>'name,interspace_id','USING'=>'BTREE','COMMENT'=>'name,interspace_id'],
-            ['TYPE'=>'UNIQUE','FIELD'=>'code','NAME'=>'code','USING'=>'BTREE','COMMENT'=>'code'],
+            ['TYPE'=>'UNIQUE','FIELD'=>'interspace_id','NAME'=>'interspace_id','USING'=>'BTREE','COMMENT'=>'interspace_id'],
         ],
         'PRIMARY'=>'id',//主键
     ];

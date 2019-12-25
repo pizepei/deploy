@@ -7,7 +7,7 @@
  * @explain 主要是用来保存每个固定版本的git项目的标记（考虑到安全问题在操作时会通过git账号进行权限检测）
  */
 
-namespace pizepei\deploy\model;
+namespace pizepei\deploy\model\service;
 
 
 use pizepei\model\db\Model;
