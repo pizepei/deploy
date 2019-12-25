@@ -112,7 +112,7 @@ class BasicsDeploy extends Controller
             $PasswordHash = new PasswordHash();
             //获取密码hash
             $password_hash = $PasswordHash->password_hash('88888888',$config['algo'],$config['options']);
-            if(!empty($password_hash)){
+            if(empty($password_hash)){
                 $this->error('密码hash错误');
             }
             $Data['password_hash']  = $password_hash;
