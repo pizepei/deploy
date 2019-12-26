@@ -11,6 +11,7 @@ use pizepei\basics\model\account\AccountAndRoleModel;
 use pizepei\basics\model\account\AccountModel;
 use pizepei\basics\model\account\AccountRoleModel;
 use pizepei\basics\service\account\BasicsAccountService;
+use pizepei\basics\service\BasicsMenuService;
 use pizepei\deploy\DeployService;
 use pizepei\deploy\LocalDeployServic;
 use pizepei\deploy\model\DeployServerConfigModel;
@@ -248,7 +249,7 @@ class BasicsDeploy extends Controller
      * @Author pizepei
      * @Created 2019/6/16 22:43
      * @param \pizepei\staging\Request $Request
-     * @return array [html]
+     * @return array [json]
      *    data [raw]
      * @throws \Exception
      * @title  gitlab System hooks
@@ -259,10 +260,16 @@ class BasicsDeploy extends Controller
     public function test(Request $Request)
     {
 
-        $json =  file_get_contents('../composer.json');
+        $this->succeed((new BasicsMenuService())->getUserMenuList(['8d71b077bb914db5d082751d102ec094']));
+        $this->succeed(LocalDeployServic::getMenuTemplate($this->app,['']));
 
-        $array = json_decode($json,true);
-        echo  json_encode($array,JSON_PRETTY_PRINT );
+        $json2 =  file_get_contents('../vendor/pizepei/deploy/src/controller/menuTemplatePath.json');
+        $json =  file_get_contents('../vendor/pizepei/basics/src/controller/menuTemplatePath.json');
+        $aarry = array_merge(json_decode($json,true),json_decode($json2,true));
+        Helper()->arrayList()->sortMultiArray($aarry,['sort' => SORT_DESC]);
+        $this->succeed($aarry);
+//        $array = json_decode($json,true);
+//        echo  json_encode($array,JSON_PRETTY_PRINT );
 //        $this->succeed($array);
 //        $api = new BasicBtApiSerice('','');
 ////        $BasicBtApiSerice = new BasicBtApiSerice('http://'.$v['server_ip'].':'.$v['bt_api']['port'],$v['bt_api']['key']);

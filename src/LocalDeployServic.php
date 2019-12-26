@@ -478,7 +478,59 @@ class LocalDeployServic
         }
         # 写入权限文件$permissions
         $App->InitializeConfig()->set_config('BaseAuthGroup',['DATA'=>$baseAuthGroup],$App->__DEPLOY_CONFIG_PATH__.DIRECTORY_SEPARATOR.$App->__APP__.DIRECTORY_SEPARATOR,'','基础权限集合');
+    }
 
+    /**
+     * @Author 皮泽培
+     * @Created 2019/12/26 15:16
+     * @param App $App
+     * @param $param  暂时没有用
+     * @title  自动生成导航菜单
+     * @explain 注意：菜单的id理论上是唯一的是依赖包命名空间+菜单上下级+菜单name的md5值
+     * @return array
+     * @throws \Exception
+     */
+    public static function getMenuTemplate(App $App,$param)
+    {
+        # 获取控制器文件路径/normative/vendor/pizepei/deploy/src/controller/menuTemplatePath.json
+        Helper()->getFilePathData('..'.DIRECTORY_SEPARATOR.'vendor',$pathData,'TemplatePath.json','menuTemplatePath.json');
+        $path = [];
+        $baseAuthGroup = [];
+        $aarry =[];
+        foreach($pathData as &$value){
+            $data = json_decode($value['packageInfo'],true);
+            # 清除../   替换  /  \  .php  和src  获取基础控制器的路径地址
+            $basePath = str_replace(['.php','/','..\\','../','\\src\\controller\\menuTemplatePath.json'],['','\\','','',''],$value['path']);
+            static::buildMenuData($basePath,$data);    #构建菜单id
+            $aarry[] = $data;
+        }
+        # 合并
+        $aarry = array_merge(...$aarry);
+        # 排序
+        Helper()->arrayList()->sortMultiArray($aarry,['sort' => SORT_DESC]);
+        # 写入菜单文件
+        $App->InitializeConfig()->set_config('BaseMenu',['DATA'=>$aarry],$App->__DEPLOY_CONFIG_PATH__.DIRECTORY_SEPARATOR.$App->__APP__.DIRECTORY_SEPARATOR,'','导航菜单');
+        return $aarry;
+    }
+    /**
+     * @Author 皮泽培
+     * @Created 2019/12/26 15:14
+     * @param string $key
+     * @param array $data
+     * @title  构建菜单id
+     * @explain 路由功能说明
+     */
+    public static function buildMenuData(string $key,array &$data,$package ='')
+    {
+        #数据分析
+        foreach ($data as &$value){
+            $value['id'] = md5($key.$value['name']);
+            $value['package'] = $package ==''?$key:$package;
+            if (isset($value['children']) && is_array($value['children']) && $value['children'] !==[])
+            {
+                static::buildMenuData($value['id'],$value['children'],$value['package']);
+            }
+        }
     }
 
     /**

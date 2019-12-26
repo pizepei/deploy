@@ -1,0 +1,91 @@
+[
+  {
+    "title": "部署管理",
+    "name":"deploy",
+    "icon": "layui-icon-template-1",
+    "spread": 0,
+    "jump": "",
+    "extend": {},
+    "sort": 50,
+    "children": [
+      {
+        "title": "GitLab"
+        ,"name":"gitlab"
+        ,"spread": 0
+        ,"extend": {}
+        ,"sort": 99
+        ,"children": [
+          {
+            "title": "账号信息"
+            ,"name":"user-center"
+            ,"spread": 0
+            ,"extend": {}
+            ,"sort": 99
+          }
+        ,{
+            "title": "项目列表"
+            ,"name":"projectsList"
+            ,"spread": 0
+            ,"extend": {}
+            ,"sort": 98
+          }
+        ]
+      },
+      {
+        "title": "主机管理"
+        ,"name":"host-group"
+        ,"spread": 0
+        ,"extend": {}
+        ,"sort": 98
+        ,"children": [
+              {
+                "title": "分组管理"
+                ,"name":"group-list"
+                ,"spread": 0
+                ,"extend": {}
+                ,"sort": 99
+                }
+              ,{
+                "title": "主机列表"
+                ,"name":"host-list"
+                ,"spread": 0
+                ,"extend": {}
+                ,"sort": 98
+              }
+        ]
+      },
+      {
+        "title": "部署空间"
+        ,"name":"interspace"
+        ,"spread": 0
+        ,"extend": {}
+        ,"sort": 97
+        ,"children": [
+          {
+          "title": "空间列表"
+          ,"name":"list"
+          ,"spread": 0
+          ,"extend": {}
+          ,"sort": 98
+          }
+        ]
+      },
+      {
+        "title": "系统空间"
+        ,"name":"system"
+        ,"spread": 0
+        ,"extend": {}
+        ,"sort": 96
+        ,"children": [
+            {
+            "title": "系统列表列表"
+            ,"name":"list"
+            ,"spread": 0
+            ,"extend": {}
+            ,"sort": 98
+            }
+        ]
+      }
+    ]
+  }
+]
