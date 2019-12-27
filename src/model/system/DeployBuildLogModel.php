@@ -54,6 +54,9 @@ class DeployBuildLogModel extends Model
         'projects_name'=>[
             'TYPE'=>"varchar(500)", 'DEFAULT'=>'', 'COMMENT'=>'项目名称',
         ],
+        'module_prefix'=>[
+            'TYPE'=>"varchar(500)", 'DEFAULT'=>'', 'COMMENT'=>'项目部署前缀',
+        ],
         'build_log'=>[
             'TYPE'=>'json', 'DEFAULT'=>false, 'COMMENT'=>'日志信息',
         ],
