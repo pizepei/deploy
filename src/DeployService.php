@@ -576,7 +576,7 @@ class DeployService
         }
 
         if ($type ==='html'){
-            $Shell[] = 'rm -rf 帮助  && rm -rf src';
+            $Shell[] = 'rm -rf 帮助  && rm -rf src && rm -rf node_modules && rm -rf .git';
         }
 
         # 发送流程
