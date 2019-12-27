@@ -430,11 +430,17 @@ class DeployService
         # 通过判断当前项目是否是主项目id 来确定是部署参数
         if (isset($DeploySystem['deploy']['CENTRE_ID']) && $DeploySystem['deploy']['CENTRE_ID'] === $project_id){
             $DeploySystem['deploy']['EXCLUDE_PACKAGE'] = []; # 是否限制控制器生成  [] 是完全不限制
+            $service_module = [];
+            foreach ($DeploySystem['service_module'] as &$value){
+                $ar = explode('--',$value['name']);
+                $value['path'] = reset($ar);
+            }
         }
+        $DeploySystem['deploy']['SERVICE_MODULE'] = $DeploySystem['service_module']; # 模块信息
         $DeploySystem['deploy']['INTERSPACE_ID'] = $interspaceId; # 空间id
         $DeploySystem['deploy']['INITIALIZE']['interspaceId'] = $interspaceId; # 空间id
         $DeploySystem['deploy']['INITIALIZE']['appid'] = $systemId; # 系统id就是appid
-        $DeploySystem['deploy']['__EXPLOIT__'] = 1; # 调试模式
+        $DeploySystem['deploy']['__EXPLOIT__'] = 0; # 调试模式
         $DeploySystem['deploy']['PROJECT_ID'] = $project_id; # 项目ID
         $DeployData = array_merge($DeployData,$DeploySystem['deploy']);
         $data['deployConfigArray'] = $DeployData;
