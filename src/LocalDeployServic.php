@@ -492,29 +492,31 @@ class LocalDeployServic
      */
     public static function getMenuTemplate(App $App,$param)
     {
-        Helper()->getFilePathData('..'.$App->DOCUMENT_ROOT.DIRECTORY_SEPARATOR.'vendor',$pathData,'TemplatePath.json','menuTemplatePath.json');
         # 获取控制器文件路径/normative/vendor/pizepei/deploy/src/controller/menuTemplatePath.json
-        foreach (\Deploy::SERVICE_MODULE as $v){
-            $pathData =[];
-            Helper()->getFilePathData(dirname($App->DOCUMENT_ROOT,1).DIRECTORY_SEPARATOR.$v['path'].DIRECTORY_SEPARATOR.'vendor',$pathData,'TemplatePath.json','menuTemplatePath.json');
-            $path = [];
-            $baseAuthGroup = [];
-            $aarry =[];
-            foreach($pathData as &$value){
-                $data = json_decode($value['packageInfo'],true);
-                # 清除../   替换  /  \  .php  和src  获取基础控制器的路径地址
-                $basePath = str_replace(['.php','/','..\\','../','\\src\\controller\\menuTemplatePath.json'],['','\\','','',''],$value['path']);
-                static::buildMenuData($basePath,$data);    #构建菜单id
-                $aarry[] = $data;
+        if (\Deploy::SERVICE_MODULE !==[]){
+            foreach (\Deploy::SERVICE_MODULE as $v){
+                $pathData =[];
+                Helper()->getFilePathData(dirname($App->DOCUMENT_ROOT,1).DIRECTORY_SEPARATOR.$v['path'].DIRECTORY_SEPARATOR.'vendor',$pathData,'TemplatePath.json','menuTemplatePath.json');
+                $path = [];
+                $baseAuthGroup = [];
+                $aarry =[];
+                foreach($pathData as &$value){
+                    $data = json_decode($value['packageInfo'],true);
+                    # 清除../   替换  /  \  .php  和src  获取基础控制器的路径地址
+                    $basePath = str_replace([$App->DOCUMENT_ROOT,'.php','/','..\\','../','\\src\\controller\\menuTemplatePath.json'],['','','\\','','',''],$value['path']);
+                    static::buildMenuData($basePath,$data);    #构建菜单id
+                    $aarry[] = $data;
+                }
             }
+            $aarry = array_merge(...$aarry);
+            # 合并
+            # 排序
+            Helper()->arrayList()->sortMultiArray($aarry,['sort' => SORT_DESC]);
+            # 写入菜单文件
+            $App->InitializeConfig()->set_config('BaseMenu',['DATA'=>$aarry],$App->__DEPLOY_CONFIG_PATH__.DIRECTORY_SEPARATOR.$App->__APP__.DIRECTORY_SEPARATOR,'','导航菜单');
+            return $aarry;
         }
-        $aarry = array_merge(...$aarry);
-        # 合并
-        # 排序
-        Helper()->arrayList()->sortMultiArray($aarry,['sort' => SORT_DESC]);
-        # 写入菜单文件
-        $App->InitializeConfig()->set_config('BaseMenu',['DATA'=>$aarry],$App->__DEPLOY_CONFIG_PATH__.DIRECTORY_SEPARATOR.$App->__APP__.DIRECTORY_SEPARATOR,'','导航菜单');
-        return $aarry;
+        return [];
     }
     /**
      * @Author 皮泽培
