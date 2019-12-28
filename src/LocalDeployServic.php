@@ -525,14 +525,16 @@ class LocalDeployServic
 
         # 附属模块导航菜单(暂时没有使用）
         Helper()->getFilePathData('..'.DIRECTORY_SEPARATOR.'vendor',$pathData,'TemplatePath.json','menuTemplatePath.json');
-        $aarry = static::getMenuTemplateInfo($App,$pathData);
+        $aarry = static::getMenuTemplateInfo($App,$pathData,\Deploy::MODULE_PREFIX);
         if (count($aarry) >1){
             $baseArray[] = array_merge(...$aarry);
         }else if (count($aarry) === 1){
-            $baseArray[] = $aarry;
+            $baseArray = array_merge(...$baseArray);
         }
-        $aarry =  Helper()->arrayList()->array_merge_deep_more(...$baseArray);
-        $App->InitializeConfig()->set_config('BaseMenu',['DATA'=>$aarry],$App->__DEPLOY_CONFIG_PATH__.DIRECTORY_SEPARATOR.$App->__APP__.DIRECTORY_SEPARATOR,'','附属模块导航菜单');
+        if (isset($baseArray)){
+            $aarry =  array_merge(...$baseArray);
+        }
+        $App->InitializeConfig()->set_config('BaseMenu',['DATA'=>$aarry??[]],$App->__DEPLOY_CONFIG_PATH__.DIRECTORY_SEPARATOR.$App->__APP__.DIRECTORY_SEPARATOR,'','附属模块导航菜单');
 
         return $aarry;
     }
@@ -551,7 +553,7 @@ class LocalDeployServic
         $aarry = [];
         foreach($pathData as &$value){
             # 清除../   替换  /  \  .php  和src  获取基础控制器的路径地址
-            $value['path'] = str_replace([dirname($App->DOCUMENT_ROOT,1).DIRECTORY_SEPARATOR.$path],[''],$value['path']);
+            $value['path'] = str_replace([dirname($App->DOCUMENT_ROOT,1).DIRECTORY_SEPARATOR.$path,DIRECTORY_SEPARATOR.'vendor'.DIRECTORY_SEPARATOR],['',''],$value['path']);
             $basePath = str_replace(['.php','/','..\\','../','\\src\\controller\\menuTemplatePath.json'],['','\\','','',''],$value['path']);
             if (!$centre  && in_array($basePath,self::__MENU__CENTRE) ){
                 # 不是主项目  同时是基础包
@@ -585,8 +587,8 @@ class LocalDeployServic
         }
     }
     const __MENU__CENTRE = [
-        '\vendor\pizepei\deploy',
-        '\vendor\pizepei\basics',
+        'pizepei\deploy',
+        'pizepei\basics',
     ];
     /**
      * 统一的控制器文件模板
