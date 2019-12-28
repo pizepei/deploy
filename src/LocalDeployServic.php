@@ -504,23 +504,25 @@ class LocalDeployServic
                     $CentreAarry = static::getMenuTemplateInfo($App,$pathData,$v['path'],true);
                 }else{
                     # 获取单独一个服务模块的菜单
-                    $aarry = static::getMenuTemplateInfo($App,$pathData,$v['path'],false);
-                    if (count($aarry) >1){
-                        $baseArray[] = array_merge(...$aarry);
-                    }else if (count($aarry) === 1){
-                        $baseArray = $aarry;
+                    $array = static::getMenuTemplateInfo($App,$pathData,$v['path'],false);
+                    if (count($array) >1){
+                        $baseArray = array_merge(...$array);
+                    }else if (count($array) === 1){
+
+                        $baseArray = $array;
                     }
                 }
             }
+
+
             # 筛选主项目数据出来 在最后合并
-            $baseArray[] = $CentreAarry[0];
-            $aarry =  array_merge(...$baseArray);
+            $data = Helper()->arrayList()->arrayAdditional($baseArray,$CentreAarry);
             # 合并
             # 排序
-            Helper()->arrayList()->sortMultiArray($aarry,['sort' => SORT_DESC]);
+            Helper()->arrayList()->sortMultiArray($data,['sort' => SORT_DESC]);
             # 写入菜单文件
-            $App->InitializeConfig()->set_config('BaseMenu',['DATA'=>$aarry],$App->__DEPLOY_CONFIG_PATH__.DIRECTORY_SEPARATOR.$App->__APP__.DIRECTORY_SEPARATOR,'','导航菜单');
-            return $aarry;
+            $App->InitializeConfig()->set_config('BaseMenu',['DATA'=>$data],$App->__DEPLOY_CONFIG_PATH__.DIRECTORY_SEPARATOR.$App->__APP__.DIRECTORY_SEPARATOR,'','导航菜单');
+            return $data;
         }
 
         # 附属模块导航菜单(暂时没有使用）
@@ -560,8 +562,9 @@ class LocalDeployServic
                 continue;
             }
             $data = json_decode($value['packageInfo'],true);
+
             static::buildMenuData($basePath,$data);    #构建菜单id
-            $aarry[] = $data;
+            $aarry[$basePath] = $data;
         }
         return $aarry;
     }
@@ -588,7 +591,7 @@ class LocalDeployServic
     }
     const __MENU__CENTRE = [
         'pizepei\deploy',
-//        'pizepei\basics',
+        'pizepei\basics',
     ];
     /**
      * 统一的控制器文件模板
