@@ -314,7 +314,7 @@ class DeployService
 
         $deployData['system']   =     $System;
         $deployData['request']  =    $Request->post();
-        $deployData['MODULE_PREFIX']   =    $SystemModuleConfig['deploy']['VIEW_RESOURCE_PREFIX'];
+        $deployData['MODULE_PREFIX']   =    $SystemModuleConfig['deploy']['MODULE_PREFIX'];
 
 
         # 通过gitlab_id 获取项目信息
@@ -609,7 +609,7 @@ class DeployService
         $this->sendBuildDeployFlow('正在clone检出项目');
         $Shell[] = 'echo 正在clone检出项目： '.$gitInfo['ssh_url_to_repo'];
         # clone 项目
-        $Shell[] = 'git clone -q '.$gitInfo['ssh_url_to_repo'].' '.$gitInfo['module_prefix'];
+        $Shell[] = 'git clone -q   --depth 20 '.$gitInfo['ssh_url_to_repo'].' '.$gitInfo['module_prefix'];
         #    进入clone构建目录
         $Shell[] = 'cd '.$gitInfo['buildPath'].$gitInfo['module_prefix'];
         $Shell[] = 'git reset --hard';
