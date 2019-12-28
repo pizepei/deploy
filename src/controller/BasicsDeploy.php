@@ -260,9 +260,10 @@ class BasicsDeploy extends Controller
     public function test(Request $Request)
     {
 //        $this->succeed((new BasicsMenuService())->getUserMenuList('SuperAdmin'));
+        $menuData = (new BasicsMenuService())->getUserMenuList($this->app->Authority->isSuperAdmin()?'':($this->UserInfo['role']['menu']??[]));
 
 //        $this->succeed((new BasicsMenuService())->getUserMenuList(['8d71b077bb914db5d082751d102ec094','94d8982849c0068b35585d24e365639c']));
-        $this->succeed(LocalDeployServic::getMenuTemplate($this->app,['']));
+        $this->succeed($menuData);
 
         $json2 =  file_get_contents('../vendor/pizepei/deploy/src/controller/menuTemplatePath.json');
         $json =  file_get_contents('../vendor/pizepei/basics/src/controller/menuTemplatePath.json');

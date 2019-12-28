@@ -557,6 +557,7 @@ class DeployService
         # 针对性 的更新依赖操作
         if ($action ==='update'){
             if ($type ==='php'){
+                    $Shell[] = ['composer clearcache',1200];
                     $Shell[] = ['composer update',1200];
                 }else{
                     $Shell[] = 'echo 前端项目进行构建';
@@ -567,6 +568,7 @@ class DeployService
             $Shell[] = 'echo 切换到对应的sha ：'.$action;
             $Shell[] = 'git checkout -q '.$action.' &&  git reset --hard';
             if ($type ==='php'){
+                $Shell[] = ['composer clearcache',1200];
                 $Shell[] = ['composer update',1200];
             }else{
                 $Shell[] = 'echo 前端项目进行构建';
