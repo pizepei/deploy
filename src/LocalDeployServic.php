@@ -493,7 +493,9 @@ class LocalDeployServic
     public static function getMenuTemplate(App $App,$param)
     {
         # 获取控制器文件路径/normative/vendor/pizepei/deploy/src/controller/menuTemplatePath.json
-        if (\Deploy::SERVICE_MODULE !==[]){
+
+        # 只有主项目 才合并
+        if (\Deploy::SERVICE_MODULE !==[] && \Deploy::CENTRE_ID === \Deploy::PROJECT_ID ){
             foreach (\Deploy::SERVICE_MODULE as $v){
                 $pathData =[];
                 Helper()->getFilePathData(dirname($App->DOCUMENT_ROOT,1).DIRECTORY_SEPARATOR.$v['path'].DIRECTORY_SEPARATOR.'vendor',$pathData,'TemplatePath.json','menuTemplatePath.json');
@@ -520,7 +522,19 @@ class LocalDeployServic
             $App->InitializeConfig()->set_config('BaseMenu',['DATA'=>$aarry],$App->__DEPLOY_CONFIG_PATH__.DIRECTORY_SEPARATOR.$App->__APP__.DIRECTORY_SEPARATOR,'','导航菜单');
             return $aarry;
         }
-        return [];
+
+        # 附属模块导航菜单(暂时没有使用）
+        Helper()->getFilePathData('..'.DIRECTORY_SEPARATOR.'vendor',$pathData,'TemplatePath.json','menuTemplatePath.json');
+        $aarry = static::getMenuTemplateInfo($App,$pathData);
+        if (count($aarry) >1){
+            $baseArray[] = array_merge(...$aarry);
+        }else if (count($aarry) === 1){
+            $baseArray[] = $aarry;
+        }
+        $aarry =  Helper()->arrayList()->array_merge_deep_more(...$baseArray);
+        $App->InitializeConfig()->set_config('BaseMenu',['DATA'=>$aarry],$App->__DEPLOY_CONFIG_PATH__.DIRECTORY_SEPARATOR.$App->__APP__.DIRECTORY_SEPARATOR,'','附属模块导航菜单');
+
+        return $aarry;
     }
 
     /**
