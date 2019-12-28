@@ -501,20 +501,20 @@ class LocalDeployServic
                 Helper()->getFilePathData(dirname($App->DOCUMENT_ROOT,1).DIRECTORY_SEPARATOR.$v['path'].DIRECTORY_SEPARATOR.'vendor',$pathData,'TemplatePath.json','menuTemplatePath.json');
                 if (\Deploy::CENTRE_ID === (int)$v['id']){
                     # 获取单独一个服务模块的菜单  如果是主项目数据单独使用 在后面统一覆盖合并
-                    $CentreAarry = static::getMenuTemplateInfo($App,$pathData);
+                    $CentreAarry = static::getMenuTemplateInfo($App,$pathData,$v['path'],true);
                 }else{
                     # 获取单独一个服务模块的菜单
-                    $aarry = static::getMenuTemplateInfo($App,$pathData);
+                    $aarry = static::getMenuTemplateInfo($App,$pathData,$v['path'],false);
                     if (count($aarry) >1){
                         $baseArray[] = array_merge(...$aarry);
                     }else if (count($aarry) === 1){
-                        $baseArray[] = $aarry;
+                        $baseArray = array_merge($aarry);
                     }
                 }
             }
             # 筛选主项目数据出来 在最后合并
             $baseArray[] = $CentreAarry[0];
-            $aarry =  Helper()->arrayList()->array_merge_deep_more(...$baseArray);
+            $aarry =  array_merge(...$baseArray);
             # 合并
             # 排序
             Helper()->arrayList()->sortMultiArray($aarry,['sort' => SORT_DESC]);
@@ -546,13 +546,18 @@ class LocalDeployServic
      * @return array
      * @throws \Exception
      */
-    public static function getMenuTemplateInfo(App $App,$pathData)
+    public static function getMenuTemplateInfo(App $App,$pathData,$path,bool$centre=false)
     {
         $aarry = [];
         foreach($pathData as &$value){
-            $data = json_decode($value['packageInfo'],true);
             # 清除../   替换  /  \  .php  和src  获取基础控制器的路径地址
-            $basePath = str_replace([$App->DOCUMENT_ROOT,'.php','/','..\\','../','\\src\\controller\\menuTemplatePath.json'],['','','\\','','',''],$value['path']);
+            $value['path'] = str_replace([dirname($App->DOCUMENT_ROOT,1).DIRECTORY_SEPARATOR.$path],[''],$value['path']);
+            $basePath = str_replace(['.php','/','..\\','../','\\src\\controller\\menuTemplatePath.json'],['','\\','','',''],$value['path']);
+            if (!$centre  && in_array($basePath,self::__MENU__CENTRE) ){
+                # 不是主项目  同时是基础包
+                continue;
+            }
+            $data = json_decode($value['packageInfo'],true);
             static::buildMenuData($basePath,$data);    #构建菜单id
             $aarry[] = $data;
         }
@@ -579,7 +584,10 @@ class LocalDeployServic
             }
         }
     }
-
+    const __MENU__CENTRE = [
+        '\vendor\pizepei\deploy',
+        '\vendor\pizepei\basics',
+    ];
     /**
      * 统一的控制器文件模板
      */
