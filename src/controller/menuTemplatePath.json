@@ -7,14 +7,14 @@
     "jump": "",
     "extend": {},
     "sort": 50,
-    "children": [
+    "list": [
       {
         "title": "GitLab"
         ,"name":"gitlab"
         ,"spread": 0
         ,"extend": {}
         ,"sort": 99
-        ,"children": [
+        ,"list": [
           {
             "title": "账号信息"
             ,"name":"user-center"
@@ -37,7 +37,7 @@
         ,"spread": 0
         ,"extend": {}
         ,"sort": 98
-        ,"children": [
+        ,"list": [
               {
                 "title": "分组管理"
                 ,"name":"group-list"
@@ -60,7 +60,7 @@
         ,"spread": 0
         ,"extend": {}
         ,"sort": 97
-        ,"children": [
+        ,"list": [
           {
           "title": "空间列表"
           ,"name":"list"
@@ -76,7 +76,7 @@
         ,"spread": 0
         ,"extend": {}
         ,"sort": 96
-        ,"children": [
+        ,"list": [
             {
             "title": "系统列表列表"
             ,"name":"list"
