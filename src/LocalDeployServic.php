@@ -65,9 +65,9 @@ class LocalDeployServic
             'encrypt_msg'       =>$encrypt_msg,
         ];
         if (isset(\Deploy::INITIALIZE['versions']) &&  \Deploy::INITIALIZE['versions']==='V2'){
-            $rws  = Helper::init()->httpRequest(\Deploy::INITIALIZE['configCenter'].'service-config/'.\Deploy::INITIALIZE['appid'].'.json',Helper::init()->json_encode($postData));
+            $rws  = Helper::init()->httpRequest(\Deploy::INITIALIZE['configCenter'].'service-config/'.\Deploy::INITIALIZE['appid'].'.json',Helper::init()->json_encode($postData),empty(\Deploy::INITIALIZE['hostDomain'])?[]:['header'=>['Host:'.\Deploy::INITIALIZE['hostDomain']]]);
         }else{
-            $rws  = Helper::init()->httpRequest(\Deploy::INITIALIZE['configCenter'].'service-config/'.\Deploy::INITIALIZE['appid'],Helper::init()->json_encode($postData));
+            $rws  = Helper::init()->httpRequest(\Deploy::INITIALIZE['configCenter'].'service-config/'.\Deploy::INITIALIZE['appid'],Helper::init()->json_encode($postData),empty(\Deploy::INITIALIZE['hostDomain'])?[]:['header'=>['Host:'.\Deploy::INITIALIZE['hostDomain']]]);
         }
         if ($rws['RequestInfo']['http_code'] !== 200){
             throw new \Exception('初始化配置失败：请求配置中心失败',10004);
