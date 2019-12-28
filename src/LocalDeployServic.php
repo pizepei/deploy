@@ -511,7 +511,7 @@ class LocalDeployServic
                 }
             }
             # 筛选主项目数据出来 在最后合并
-            $baseArray[] = $CentreAarry;
+            $baseArray[] = $CentreAarry[0];
             $aarry =  Helper()->arrayList()->array_merge_deep_more(...$baseArray);
             # 合并
             # 排序
