@@ -508,7 +508,7 @@ class LocalDeployServic
                     if (count($aarry) >1){
                         $baseArray[] = array_merge(...$aarry);
                     }else if (count($aarry) === 1){
-                        $baseArray = array_merge($aarry);
+                        $baseArray = $aarry;
                     }
                 }
             }
@@ -529,7 +529,7 @@ class LocalDeployServic
         if (count($aarry) >1){
             $baseArray[] = array_merge(...$aarry);
         }else if (count($aarry) === 1){
-            $baseArray = array_merge(...$baseArray);
+            $baseArray = $aarry;
         }
         if (isset($baseArray)){
             $aarry =  array_merge(...$baseArray);
@@ -588,7 +588,7 @@ class LocalDeployServic
     }
     const __MENU__CENTRE = [
         'pizepei\deploy',
-        'pizepei\basics',
+//        'pizepei\basics',
     ];
     /**
      * 统一的控制器文件模板
