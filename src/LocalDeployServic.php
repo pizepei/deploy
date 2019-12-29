@@ -534,7 +534,8 @@ class LocalDeployServic
             $baseArray = $aarry;
         }
         if (isset($baseArray)){
-            $aarry =  array_merge(...$baseArray);
+            # 筛选主项目数据出来 在最后合并
+            $data = Helper()->arrayList()->arrayAdditional([],$CentreAarry);
         }
         $App->InitializeConfig()->set_config('BaseMenu',['DATA'=>$aarry??[]],$App->__DEPLOY_CONFIG_PATH__.DIRECTORY_SEPARATOR.$App->__APP__.DIRECTORY_SEPARATOR,'','附属模块导航菜单');
 
