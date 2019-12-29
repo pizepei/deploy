@@ -314,7 +314,7 @@ class LocalDeployServic
             case 'Dbtabase':
                 # 获取数据库配置  然后合并
                 $systemDbConfig = DeploySystemDbConfigModel::table()->get($ModuleConfig['db_config_id']);
-                $systemDbConfig['dbtabase']['prefix'] = $DeploySystem['code'].'_';
+//                $systemDbConfig['dbtabase']['prefix'] = $DeploySystem['code'].'_';
                 $DbtabaseTpl = app()->InitializeConfig()->get_const('\pizepei\config\Dbtabase');
                 $config = $DbtabaseTpl;
                 $DBTABASE = Helper()->arrayList()->array_merge_deep($DbtabaseTpl['DBTABASE'],$systemDbConfig['dbtabase']);
@@ -535,9 +535,9 @@ class LocalDeployServic
         }
         if (isset($baseArray)){
             # 筛选主项目数据出来 在最后合并
-            $data = Helper()->arrayList()->arrayAdditional([],$CentreAarry);
+            $data = Helper()->arrayList()->arrayAdditional([],$baseArray);
         }
-        $App->InitializeConfig()->set_config('BaseMenu',['DATA'=>$aarry??[]],$App->__DEPLOY_CONFIG_PATH__.DIRECTORY_SEPARATOR.$App->__APP__.DIRECTORY_SEPARATOR,'','附属模块导航菜单');
+        $App->InitializeConfig()->set_config('BaseMenu',['DATA'=>$data??[]],$App->__DEPLOY_CONFIG_PATH__.DIRECTORY_SEPARATOR.$App->__APP__.DIRECTORY_SEPARATOR,'','附属模块导航菜单');
 
         return $aarry;
     }
