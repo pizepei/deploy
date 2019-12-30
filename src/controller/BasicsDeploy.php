@@ -104,7 +104,7 @@ class BasicsDeploy extends Controller
         # 命令行没事 saas
         $model = TableAlterLogModel::table();
         # 同步表结构
-        $res = $model->initStructure('',true);
+        $res = $model->initStructure('',true,'namespaceModelPath.json',['centre'=>\Deploy::PROJECT_ID === \Deploy::CENTRE_ID?true:false,'deploy'=>\Deploy::DEPLOY]);
         # 判断是否有账号信息 没有创建超级管理员
         $accountData = AccountModel::table()->fetchAll();
         if (!$accountData){# 创建超级管理员
@@ -112,14 +112,14 @@ class BasicsDeploy extends Controller
             # 实例化密码类
             $PasswordHash = new PasswordHash();
             //获取密码hash
-            $password_hash = $PasswordHash->password_hash('88888888',$config['algo'],$config['options']);
+            $password_hash = $PasswordHash->password_hash(\Deploy::SUPER_ADMIN_INFO['pasword'],$config['algo'],$config['options']);
             if(empty($password_hash)){
                 $this->error('密码hash错误');
             }
             $Data['password_hash']  = $password_hash;
             $Data['number']         = 'SuperAdmin_'.Helper::str()->int_rand($config['number_count']);//编号固定开头的账号编码(common,tourist,app,appAdmin,appSuperAdmin,Administrators)
-            $Data['phone']          = 18888888888;
-            $Data['email']          = '88888888@88.com';
+            $Data['phone']          = \Deploy::SUPER_ADMIN_INFO['phone'];
+            $Data['email']          = \Deploy::SUPER_ADMIN_INFO['email'];
             $Data['type']           = 6;
             $Data['status']         = 2;
             $Data['nickname']       = '超级管理员';
@@ -143,7 +143,7 @@ class BasicsDeploy extends Controller
                 ]
             );
         }
-        return $model->initStructure('',true);
+        return $res;
     }
 
     /**
@@ -259,6 +259,11 @@ class BasicsDeploy extends Controller
      */
     public function test(Request $Request)
     {
+
+        $res = Helper()->httpRequest('http://107.172.89.191/socks/ssr/user-home/node-list.json?access-token=eyJhbGciOiJhZXMiLCJzaWciOiJtZDUiLCJ0eXAiOiJKV1QiLCJhcHBpZCI6ImFzaGFhYXNkMTIzMmpqZHNraGtreCIsIm51bWJlciI6IlN1cGVyQWRtaW5fOTIyMzM3MjAzNjg1NDc3NTgwNyJ9.WDVrMmdhQ2tFQk9nYjl5c1ZDVmMlMkZrRDdSJTJGJTJCUFp5Rkw4SnJBTEh6TG1xanRkd3NISzd2clR3TmlmY2NLNWJWUkM1SUpQWHdabTBZekFvdVMlMkY3ZmElMkI4dzVFaDRkVXE0cEhmYmdiRXBiTkJ6T3BhZFRVUjdxakRmT3pKM0pTaUVsNWFsbDJUMW9hQTFCbEZhMEF5cFJnNTYlMkJNTHd0ejFvYTJ1TXlSeG5GdFhwTWpoMklKSTY2QXJqaDhSZ1RKemw5NFZjZVJiaGNFUyUyRk14JTJGeEltZ3pRTm5SYW9lZzdmbzg0N2Y4dkdMeWhZUUh0Z1hrcUg3MlNhWiUyQktWWE5hMmRPWks4VlFzdjFLalhHYTdMNEZkWUlza1oxMkVoOWtKMVlVbWdnZ29taTZnRDNUYXQ2c2tyRGl3YWZpSFl4MnJ1SnBzTm5semZXUEhQOXFxTHg2WlBQYlBDZSUyRm5aalF5STN6TFNIWXRGMEclMkZSVTJLMzlSalJpcG1vaXpac2VHVk1WcGFVMW9saEJyUkQyRW1MdCUyRnVzcDhPdWRmJTJGbFhuZEwlMkJQJTJGV1ZJOUU5aHkybyUzRA%3D%3D.cafeb906d12aaf970b214f4a7a797a8d','',['header'=>['Host: www.qqjsq.top']]);
+
+        $this->succeed($res);
+
 //        $this->succeed((new BasicsMenuService())->getUserMenuList('SuperAdmin'));
         $menuData = (new BasicsMenuService())->getUserMenuList($this->app->Authority->isSuperAdmin()?'':($this->UserInfo['role']['menu']??[]));
 
