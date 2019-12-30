@@ -504,12 +504,11 @@ class LocalDeployServic
                     $CentreAarry = static::getMenuTemplateInfo($App,$pathData,$v['path'],true);
                 }else{
                     # 获取单独一个服务模块的菜单
-                    $array = static::getMenuTemplateInfo($App,$pathData,$v['path'],false);
-                    if (count($array) >1){
-                        $baseArray = array_merge(...$array);
-                    }else if (count($array) === 1){
-
-                        $baseArray = $array;
+                    $forArray = static::getMenuTemplateInfo($App,$pathData,$v['path'],false);
+                    if (count($forArray) >1){
+                        $baseArray = array_merge($baseArray??[],$forArray);
+                    }else if (count($forArray) === 1){
+                        $baseArray = $forArray;
                     }
                 }
             }
@@ -524,22 +523,16 @@ class LocalDeployServic
             $App->InitializeConfig()->set_config('BaseMenu',['DATA'=>$data],$App->__DEPLOY_CONFIG_PATH__.DIRECTORY_SEPARATOR.$App->__APP__.DIRECTORY_SEPARATOR,'','导航菜单');
             return $data;
         }
-
         # 附属模块导航菜单(暂时没有使用）
         Helper()->getFilePathData('..'.DIRECTORY_SEPARATOR.'vendor',$pathData,'TemplatePath.json','menuTemplatePath.json');
-        $aarry = static::getMenuTemplateInfo($App,$pathData,\Deploy::MODULE_PREFIX);
-        if (count($aarry) >1){
-            $baseArray[] = array_merge(...$aarry);
-        }else if (count($aarry) === 1){
-            $baseArray = $aarry;
-        }
+        $baseArray = static::getMenuTemplateInfo($App,$pathData,\Deploy::MODULE_PREFIX);
         if (isset($baseArray)){
             # 筛选主项目数据出来 在最后合并
             $data = Helper()->arrayList()->arrayAdditional([],$baseArray);
         }
         $App->InitializeConfig()->set_config('BaseMenu',['DATA'=>$data??[]],$App->__DEPLOY_CONFIG_PATH__.DIRECTORY_SEPARATOR.$App->__APP__.DIRECTORY_SEPARATOR,'','附属模块导航菜单');
 
-        return $aarry;
+        return $data??[];
     }
 
     /**
