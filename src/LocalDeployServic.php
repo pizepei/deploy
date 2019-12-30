@@ -512,11 +512,8 @@ class LocalDeployServic
                     }
                 }
             }
-
-
             # 筛选主项目数据出来 在最后合并
             $data = Helper()->arrayList()->arrayAdditional($baseArray,$CentreAarry);
-            # 合并
             # 排序
             Helper()->arrayList()->sortMultiArray($data,['sort' => SORT_DESC]);
             # 写入菜单文件
