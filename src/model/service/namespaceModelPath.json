@@ -1,5 +1,4 @@
 {
-  "centre":true,
-  "module": false,
+  "centre":false,
   "deploy": true
 }
