@@ -14,7 +14,6 @@
         "pizepei/config-ng": "dev-master",
         "pizepei/model": "dev-master",
         "pizepei/helper": "dev-master",
-        "pizepei/wechat":"dev-master",
         "pizepei/encryption":"dev-master",
         "php": ">=7.0.0",
         "ext-pdo": "*",
