@@ -460,7 +460,7 @@ class DeployService
         $DeploySystem['deploy']['INITIALIZE']['appid'] = $systemId; # 系统id就是appid
         $DeploySystem['deploy']['__EXPLOIT__'] = 0; # 调试模式
         $DeploySystem['deploy']['PROJECT_ID'] = $project_id; # 项目ID
-        $DeployData = array_merge($DeployData,$DeploySystem['deploy']);
+        $DeployData = array_merge($DeployData,$DeploySystem['deploy'],$DeploySystemModuleConfig['deploy']);
         $data['deployConfigArray'] = $DeployData;
         $data['deployConfigText'] = app()->InitializeConfig()->setConfigString('Deploy',$DeployData,'','Deploy');
         return $data;
