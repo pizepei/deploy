@@ -426,6 +426,8 @@ class DeployService
         $this->SSHobject->WSdirectFgetsXterm(['npm -v']);
         $this->SSHobject->WSdirectFgetsXterm(['node -v']);
         $this->SSHobject->WSdirectFgetsXterm(['php -v']);
+        $this->SSHobject->WSdirectFgetsXterm(['df -hl']);
+
     }
 
     public function setDeployConfig($interspaceId,$systemId,$project_id)
