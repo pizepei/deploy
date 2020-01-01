@@ -1026,10 +1026,11 @@ class BasicsDeploy extends Controller
      */
     public function startDeployWebSocket()
     {
-        $cli = 'cd '.$this->app->DOCUMENT_ROOT.'public'.DIRECTORY_SEPARATOR.' && php index_cli.php --route /deploy/start-web-socket   --domain '.$_SERVER['HTTP_HOST'].'>/dev/null';
+
+        $cli = 'cd '.$this->app->DOCUMENT_ROOT.'public'.DIRECTORY_SEPARATOR.' && php index_cli.php --route /deploy/start-web-socket   --domain '.$_SERVER['HTTP_HOST'].'>/dev/null &';
+        exec($cli,$res, $status);
         exec($cli,$res, $status);
         $this->succeed([$res,$status,$cli],'操作成功');
-
     }
 
     /**
