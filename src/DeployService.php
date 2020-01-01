@@ -405,10 +405,10 @@ class DeployService
         $Client = new Client($wjt);
         $Client->host = \Deploy::buildServer['WebSocketServer']['hostName'] ;
         $Client->port = \Deploy::buildServer['WebSocketServer']['port'] ;
-        $Client->connect();
+        $Client->connect(true);
         $ClientInfo = $Client->exist($userId);
         if (!$ClientInfo){
-            error('当前页面webSocket 不在线');
+            error('当前页面webSocket 不在线'.$userId);
         }
         $this->WSClient = $Client;
         $this->WSuserId = $userId;
