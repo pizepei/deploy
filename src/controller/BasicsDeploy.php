@@ -1046,7 +1046,7 @@ class BasicsDeploy extends Controller
      */
     public function ClistartDeployWebSocket()
     {
-        new WebSocketServer();
+        new WebSocketServer(\Deploy::buildServer['WebSocketServer']['config'],\Deploy::buildServer['WebSocketServer']['host'],\Deploy::buildServer['WebSocketServer']['port']);
     }
 
     /**
@@ -1071,8 +1071,10 @@ class BasicsDeploy extends Controller
                 ]
         ];
         $Client = new \pizepei\service\websocket\Client($wjt);
+        $Client->host = \Deploy::buildServer['WebSocketServer']['hostName'] ;
+        $Client->port = \Deploy::buildServer['WebSocketServer']['port'] ;
         # 后期 在配置中写入固定
-        $responseData['jwt_url'] = 'ws://'.$Client->host.':'.$Client->port.$Client->JWT_param;
+        $responseData['jwt_url'] = \Deploy::buildServer['WebSocketServer']['type'].\Deploy::buildServer['WebSocketServer']['hostName'].':'.\Deploy::buildServer['WebSocketServer']['port'].$Client->JWT_param;
         $this->succeed($responseData);
     }
 

@@ -403,6 +403,8 @@ class DeployService
         }
         # 连接webSocket
         $Client = new Client($wjt);
+        $Client->host = \Deploy::buildServer['WebSocketServer']['hostName'] ;
+        $Client->port = \Deploy::buildServer['WebSocketServer']['port'] ;
         $Client->connect();
         $ClientInfo = $Client->exist($userId);
         if (!$ClientInfo){
