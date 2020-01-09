@@ -1378,6 +1378,7 @@ class BasicsDeploy extends Controller
      *      raw [object]
      *          deploy [object] 部署配置
      *              CENTRE_ID [int]
+     *              CDN_URL [string] cdn配置
      *          config [object] 基础配置
      *              ACCOUNT [raw]   账号配置
      *              UNIVERSAL [raw] 基础配置
