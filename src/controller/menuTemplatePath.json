@@ -78,13 +78,20 @@
         ,"sort": 96
         ,"list": [
             {
-            "title": "系统列表列表"
+            "title": "常规系统列表"
             ,"name":"list"
             ,"spread": 0
             ,"extend": {}
             ,"sort": 98
+            },
+            {
+              "title": "服务系统列表"
+            ,"name":"serve-list"
+            ,"spread": 0
+            ,"extend": {}
+            ,"sort": 97
             }
-        ]
+      ]
       }
     ]
   }
