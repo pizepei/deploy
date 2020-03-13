@@ -85,11 +85,18 @@
             ,"sort": 98
             },
             {
+              "title": "SAAS系统列表"
+            ,"name":"saas-list"
+            ,"spread": 0
+            ,"extend": {}
+            ,"sort": 97
+            },
+            {
               "title": "服务系统列表"
             ,"name":"serve-list"
             ,"spread": 0
             ,"extend": {}
-            ,"sort": 97
+            ,"sort": 96
             }
       ]
       }
