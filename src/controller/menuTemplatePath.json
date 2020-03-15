@@ -2,7 +2,7 @@
   {
     "title": "部署管理",
     "name":"deploy",
-    "icon": "layui-icon-template-1",
+    "icon": "iconfont icon-bushu",
     "spread": 0,
     "jump": "",
     "extend": {},
