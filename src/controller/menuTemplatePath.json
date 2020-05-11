@@ -16,7 +16,7 @@
         ,"sort": 99
         ,"list": [
           {
-            "title": "账号信息"
+            "title": "账号授权"
             ,"name":"user-center"
             ,"spread": 0
             ,"extend": {}
@@ -32,7 +32,7 @@
         ]
       },
       {
-        "title": "主机管理"
+        "title": "主机资产"
         ,"name":"host-group"
         ,"spread": 0
         ,"extend": {}
@@ -55,7 +55,7 @@
         ]
       },
       {
-        "title": "部署空间"
+        "title": "客户空间"
         ,"name":"interspace"
         ,"spread": 0
         ,"extend": {}
@@ -69,6 +69,22 @@
           ,"sort": 98
           }
         ]
+      },
+      {
+        "title": "服务空间"
+        ,"name":"server-interspace"
+        ,"spread": 0
+        ,"extend": {}
+        ,"sort": 97
+        ,"list": [
+        {
+          "title": "空间列表"
+          ,"name":"list"
+          ,"spread": 0
+          ,"extend": {}
+          ,"sort": 98
+        }
+      ]
       },
       {
         "title": "系统空间"
